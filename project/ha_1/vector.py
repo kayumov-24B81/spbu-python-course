@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Union, List
 import math
 
 
@@ -9,15 +9,15 @@ class Vector:
         values: Tuple containing vector components
     """
 
-    values: Iterable[int | float] = []
+    values: List[Union[int, float]] = []
 
-    def __init__(self, *values: int | float):
+    def __init__(self, *values: Union[int, float]):
         """Initializes vector with components.
 
         Args:
             *values: Variable number of vector components
         """
-        self.values = values
+        self.values = list(values)
 
     def __mul__(self, vector) -> int | float:
         """Computes dot product of two vectors.
@@ -33,6 +33,7 @@ class Vector:
         """
         if len(self.values) != len(vector.values):
             raise ValueError("The dimensions of the vectors do not match")
+
         product = 0
         for x, y in zip(self.values, vector.values):
             product += x * y

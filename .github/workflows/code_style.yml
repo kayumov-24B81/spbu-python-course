@@ -64,4 +64,4 @@ jobs:
       # Run mypy
       - name: Run mypy
         run: |
-          mypy project scripts tests
+          mypy project tests

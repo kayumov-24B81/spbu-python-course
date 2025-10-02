@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import List, Union
 
 
 class Matrix:
@@ -9,9 +9,9 @@ class Matrix:
 
     """
 
-    values: Iterable[Iterable[int | float]] = []
+    values: List[List[Union[int, float]]] = []
 
-    def __init__(self, *rows: Iterable[int | float]):
+    def __init__(self, *rows: List[Union[int, float]]):
         """Initializes a matrix from rows.
 
         Args:
@@ -48,9 +48,10 @@ class Matrix:
         ):
             raise ValueError("The dimensions of the matrices do not match")
 
-        rows = []
+        rows: List[List[Union[int, float]]] = []
         for i in range(len(self.values)):
-            rows.append([])
+            row: List[Union[int, float]] = []
+            rows.append(row)
             for j in range(len(self.values[i])):
                 rows[i].append(self.values[i][j] + matrix.values[i][j])
 
@@ -73,11 +74,12 @@ class Matrix:
                 "Matrices of given dimensions are not suitable for multiplication"
             )
 
-        rows = []
+        rows: List[List[Union[int, float]]] = []
         for i in range(len(self.values)):
-            rows.append([])
+            row: List[Union[int, float]] = []
+            rows.append(row)
             for j in range(len(matrix.values[0])):
-                cell = 0
+                cell: Union[int, float] = 0
                 for r in range(len(self.values[0])):
                     cell += self.values[i][r] * matrix.values[r][j]
                 rows[i].append(cell)
