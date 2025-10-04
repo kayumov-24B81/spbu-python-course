@@ -11,7 +11,7 @@ class Vector:
 
     values: List[Union[int, float]] = []
 
-    def __init__(self, *values: Union[int, float]):
+    def __init__(self, *values: Union[int, float]) -> None:
         """Initializes vector with components.
 
         Args:
@@ -19,7 +19,7 @@ class Vector:
         """
         self.values = list(values)
 
-    def __mul__(self, vector) -> int | float:
+    def __mul__(self, vector: "Vector") -> Union[int, float]:
         """Computes dot product of two vectors.
 
         Args:
@@ -34,25 +34,25 @@ class Vector:
         if len(self.values) != len(vector.values):
             raise ValueError("The dimensions of the vectors do not match")
 
-        product = 0
+        product: Union[int, float] = 0
         for x, y in zip(self.values, vector.values):
             product += x * y
 
         return product
 
-    def length(self):
+    def length(self) -> float:
         """Calculates vector length.
 
         Returns:
             Euclidean norm of the vector
         """
-        sq_sum = 0
+        sq_sum: Union[int, float] = 0
         for x in self.values:
             sq_sum += x**2
 
         return math.sqrt(sq_sum)
 
-    def angle(self, vector):
+    def angle(self, vector: "Vector") -> float:
         """Calculates angle between two vectors in degrees.
 
         Args:

@@ -11,7 +11,7 @@ class Matrix:
 
     values: List[List[Union[int, float]]] = []
 
-    def __init__(self, *rows: List[Union[int, float]]):
+    def __init__(self, *rows: List[Union[int, float]]) -> None:
         """Initializes a matrix from rows.
 
         Args:
@@ -41,10 +41,8 @@ class Matrix:
         Raises:
             ValueError: If matrices have different dimensions
         """
-        if (
-            len(self.values)
-            != len(matrix.values) | len(self.values[0])
-            != len(matrix.values[0])
+        if len(self.values) != len(matrix.values) or len(self.values[0]) != len(
+            matrix.values[0]
         ):
             raise ValueError("The dimensions of the matrices do not match")
 
@@ -86,21 +84,22 @@ class Matrix:
 
         return Matrix(*rows)
 
-    def transpose(self):
+    def transpose(self) -> "Matrix":
         """Returns transposed matrix.
 
         Returns:
             Matrix: Transposed matrix where rows become columns
         """
-        rows = []
+        rows: List[List[Union[int, float]]] = []
         for i in range(len(self.values)):
-            rows.append([])
+            row: List[Union[int, float]] = []
+            rows.append(row)
             for j in range(len(self.values[0])):
                 rows[i].append(self.values[j][i])
 
         return Matrix(*rows)
 
-    def __eq__(self, matrix):
+    def __eq__(self, matrix: object) -> bool:
         """Checks if two matrices are equal.
 
         Args:
@@ -109,10 +108,11 @@ class Matrix:
         Returns:
             bool: True if matrices have same dimensions and elements
         """
-        if (
-            len(self.values)
-            != len(matrix.values) | len(self.values[0])
-            != len(matrix.values[0])
+        if not isinstance(matrix, Matrix):
+            return NotImplemented
+
+        if len(self.values) != len(matrix.values) or len(self.values[0]) != len(
+            matrix.values[0]
         ):
             return False
 
