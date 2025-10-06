@@ -1,6 +1,6 @@
 import pytest
 from functools import reduce
-from project.ha_2.generator import generator, pipeline, collect
+from project.ha_2.generator import *
 
 
 @pytest.mark.parametrize(
@@ -114,4 +114,4 @@ def test_callable(number_gen):
         return reduce(lambda x, y: 2 * (x + y), stream, 0)
 
     result = pipeline(number_gen, custom_reduce)
-    assert result == 20
+    assert result == 52

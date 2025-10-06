@@ -8,7 +8,7 @@ def generator(data):
         yield data
 
 
-def conveyor(generator, *operations):
+def pipeline(generator, *operations):
     current = generator
     for operation in operations:
         if isinstance(operation, tuple):
