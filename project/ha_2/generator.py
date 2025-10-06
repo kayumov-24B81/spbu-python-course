@@ -8,60 +8,34 @@ def range_gen(begin: int = 0, end: int = 10, step: int = 1):
         num += step
 
 
-def custom_map(function):
-    def mapper(stream):
-        return map(function, stream)
-
-    return mapper
-
-
-def custom_filter(function):
-    def filtrator(stream):
-        return filter(function, stream)
-
-    return filtrator
-
-
-def custom_zip(generator):
-    def zipper(stream):
-        return zip(stream, generator)
-
-    return zipper
-
-
-def custom_reduce(function, initial=None):
-    def reducer(stream):
-        elements = list(stream)
-        if initial is not None:
-            return reduce(function, elements, initial)
-        else:
-            return reduce(function, elements)
-
-    return reducer
-
-
-def custom_enumerate(start=0):
-    def enumerator(stream):
-        return enumerate(stream, start)
-
-    return enumerator
-
-
 def pipeline(generator, *operations):
     current = generator
     for operation in operations:
-        if callable(operation):
+        if isinstance(operation, tuple):
+            operator, *args = operation
+            if operator == reduce:
+                if not args:
+                    raise ValueError("Reduce requires function")
+                elements = list(current)
+                if args:
+                    func = args[0]
+                    if len(args) > 1:
+                        initial = args[1]
+                        return reduce(func, elements, initial)
+                    else:
+                        return reduce(func, elements)
+            elif operator in [filter, map]:
+                if not args:
+                    raise ValueError(f"{operator.__name__} requires function")
+                current = operator(args[0], current)
+            else:
+                current = operator(current, *args)
+        else:
             current = operation(current)
     return current
 
 
-# TODO: implement reduce collection
-def collect(stream, type=list):
-    if type == list:
-        return list(stream)
-    elif type == set:
-        return set(stream)
-    elif type == dict:
-        return dict(stream)
-    else:
-        return type(stream)
+def collect(stream, collection_type=list):
+    if not hasattr(stream, "__iter__") and not callable(stream):
+        raise ValueError("Cannot collect from terminal operation result")
+    return collection_type(stream)
