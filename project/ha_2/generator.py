@@ -1,11 +1,11 @@
 from functools import reduce
 
 
-def range_gen(begin: int = 0, end: int = 10, step: int = 1):
-    num = begin
-    while num < end:
-        yield num
-        num += step
+def generator(data):
+    if hasattr(data, "__iter__") and not (isinstance(data, (str, bytes))):
+        yield from data
+    else:
+        yield data
 
 
 def pipeline(generator, *operations):
