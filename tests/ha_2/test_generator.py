@@ -16,6 +16,7 @@ from project.ha_2.generator import *
     ],
 )
 def test_generator_basic(data, expected):
+    """Test generator type conversion with different types."""
     result = list(generator(data))
 
     if isinstance(data, set):
@@ -41,11 +42,13 @@ def test_generator_basic(data, expected):
     ],
 )
 def test_generator_integrated(data, operations, expected):
+    """Test how generator works with pipeline function."""
     result = collect(pipeline(generator(data), *operations), list)
     assert result == expected
 
 
 def test_generator_lazy_iteration():
+    """Test lazyness of generator."""
     gen = generator([1, 2, 3])
 
     assert next(gen) == 1

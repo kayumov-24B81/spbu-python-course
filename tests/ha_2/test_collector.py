@@ -13,12 +13,13 @@ from project.ha_2.generator import *
     ],
 )
 def test_collector_types(data, type, expected):
+    """Test collect function with different collection types."""
     result = collect(pipeline(iter(data)), type)
     assert result == expected
 
 
 def test_collector_integrated():
-
+    """Test collect with complex pipeline operations."""
     result = pipeline(
         generator(range(10)),
         (filter, lambda x: x % 2 == 0),

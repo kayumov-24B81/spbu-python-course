@@ -13,6 +13,7 @@ from project.ha_2.generator import *
     ],
 )
 def test_map(data, function, expected):
+    """Test map operation with different functions."""
     result = pipeline(iter(data), (map, function))
     assert list(result) == expected
 
@@ -27,6 +28,7 @@ def test_map(data, function, expected):
     ],
 )
 def test_filter(data, function, expected):
+    """Test filter operation with different predicate functions."""
     result = pipeline(iter(data), (filter, function))
     assert list(result) == expected
 
@@ -40,6 +42,7 @@ def test_filter(data, function, expected):
     ],
 )
 def test_zip(data, second_data, expected):
+    """Test zip operation with different sequences."""
     result = pipeline(iter(data), (zip, second_data))
     assert list(result) == expected
 
@@ -55,17 +58,20 @@ def test_zip(data, second_data, expected):
     ],
 )
 def test_reduce(data, operation, expected):
+    """Test reduce operation with different functions."""
     result = pipeline(iter(data), operation)
     assert result == expected
 
 
 def test_enum():
+    """Test enumerate operation"""
     result = pipeline(iter(["a", "b", "c"]), (enumerate, 1))
     assert list(result) == [(1, "a"), (2, "b"), (3, "c")]
 
 
 @pytest.fixture
 def number_gen():
+    """Fixture providing a generator with numbers [0, 1, 2, 3, 4]."""
     return generator([0, 1, 2, 3, 4])
 
 
@@ -81,11 +87,13 @@ def number_gen():
     ],
 )
 def test_mix(number_gen, operations, expected):
+    """Test complex operation chains with mupltiple operations."""
     result = pipeline(number_gen, *operations)
     assert list(result) == expected
 
 
 def test_reduce_mix(number_gen):
+    """Test reduce operation after different operation in a pipeline chain."""
     result = pipeline(
         number_gen, (filter, lambda x: x > 2), (reduce, lambda x, y: x * y, 1)
     )
@@ -93,7 +101,10 @@ def test_reduce_mix(number_gen):
 
 
 def test_custom_operation():
+    """Test pipeline with a custom user-defined operation."""
+
     def split(stream, start_size=1):
+        """Custom operation that splits stream into chuncks of increasing size."""
         piece = []
         size = start_size
         for item in stream:
@@ -110,6 +121,8 @@ def test_custom_operation():
 
 
 def test_callable(number_gen):
+    """Test pipeline with direct callable operation"""
+
     def custom_reduce(stream):
         return reduce(lambda x, y: 2 * (x + y), stream, 0)
 
