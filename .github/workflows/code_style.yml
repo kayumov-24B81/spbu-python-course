@@ -23,7 +23,7 @@ jobs:
       matrix:
 
         # Each option you define in the matrix has a key and value
-        python-version: [ 3.8 ]
+        python-version: ['3.10']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -55,3 +55,13 @@ jobs:
       - name: Run pre-commit
         run: |
           pre-commit run --all-files --color always --verbose --show-diff-on-failure
+
+      # Run tests
+      - name: Run tests
+        run: |
+          python ./scripts/run_tests.py
+
+      # Run mypy
+      - name: Run mypy
+        run: |
+          mypy project tests
