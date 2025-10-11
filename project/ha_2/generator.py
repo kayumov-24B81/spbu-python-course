@@ -18,6 +18,7 @@ V = TypeVar("V")
 
 def generator(data: Union[Iterable[T], T]) -> Generator[T, None, None]:
     """Universal data generator.
+    This generator yields strings and bytes as whole objects
 
     Args:
         data: Iterable object or single value
@@ -146,3 +147,10 @@ def collect(stream: Iterator[Any], collection_type: Type[Any] = list) -> Any:
         raise ValueError("Cannot collect from terminal operation result")
 
     return collection_type(stream)
+
+
+if __name__ == "__main__":
+    result = map(lambda x: x, 5)
+    result = list(result)
+    for v in result:
+        print(v)
