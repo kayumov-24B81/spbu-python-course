@@ -31,6 +31,27 @@ def generator(data: Union[Iterable[T], T]) -> Generator[T, None, None]:
         yield data
 
 
+def wrap_operator(operator: Callable[..., Any]) -> Callable[..., Any]:
+    """Normalizes operator signature to (collection, *args)
+
+    Args:
+        operator: Callable to wrap
+
+    Returns:
+        Wrapped operator with unified signature
+    """
+    if operator in [map, filter]:
+
+        def wrapper(current: Iterable[T], *args: Any) -> Union[map, filter]:
+            if not args:
+                raise ValueError(f"{operator.__name__} requires a function")
+            func: Callable[[T], Any] = args[0]
+            return operator(func, current, *args[1:])
+
+        return wrapper
+    return operator
+
+
 @overload
 def pipeline(generator: Iterator[T], *operations: tuple[Any, ...]) -> Iterator[Any]:
     ...
@@ -79,13 +100,9 @@ def pipeline(
                 else:
                     return reduce(red_func, elements)
 
-            elif operator in [filter, map]:
-                if not args:
-                    raise ValueError(f"{operator.__name__} requires function")
-                func: Callable[[T], Any] = args[0]
-                current = operator(func, current, *args[1:])
             else:
-                current = operator(current, *args)
+                wrapped_operator = wrap_operator(operator)
+                current = wrapped_operator(current, *args)
         else:
             cust_func: Callable[[Iterator[Any]], Iterator[Any]] = operation
             current = cust_func(current)
