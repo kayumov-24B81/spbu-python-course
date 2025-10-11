@@ -147,10 +147,3 @@ def collect(stream: Iterator[Any], collection_type: Type[Any] = list) -> Any:
         raise ValueError("Cannot collect from terminal operation result")
 
     return collection_type(stream)
-
-
-if __name__ == "__main__":
-    result = map(lambda x: x, 5)
-    result = list(result)
-    for v in result:
-        print(v)
