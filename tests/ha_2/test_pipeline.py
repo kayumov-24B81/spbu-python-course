@@ -128,3 +128,14 @@ def test_callable(number_gen):
 
     result = pipeline(number_gen, custom_reduce)
     assert result == 52
+
+
+@pytest.mark.parametrize(
+    "operation, expected",
+    [
+        (((map, lambda x, y: x + y, iter([0, 1, 2, 3, 4])), [0, 2, 4, 6, 8])),
+    ],
+)
+def test_map_multiple_collections(number_gen, operation, expected):
+    result = pipeline(number_gen, operation)
+    assert list(result) == expected

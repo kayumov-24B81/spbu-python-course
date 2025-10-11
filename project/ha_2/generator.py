@@ -83,7 +83,7 @@ def pipeline(
                 if not args:
                     raise ValueError(f"{operator.__name__} requires function")
                 func: Callable[[T], Any] = args[0]
-                current = operator(func, current)
+                current = operator(func, current, *args[1:])
             else:
                 current = operator(current, *args)
         else:
