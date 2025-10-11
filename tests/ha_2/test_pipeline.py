@@ -139,3 +139,43 @@ def test_callable(number_gen):
 def test_map_multiple_collections(number_gen, operation, expected):
     result = pipeline(number_gen, operation)
     assert list(result) == expected
+
+
+def test_pipeline_lazyness():
+    "Test if pipeline applies operations lazily."
+    logs = []
+
+    def logging_gen():
+        for i in range(4):
+            logs.append(f"generated: {i}")
+            yield i
+
+    def logging_map(x):
+        logs.append(f"mapped: 2*{x}")
+        return 2 * x
+
+    def logging_filter(x):
+        logs.append(f"filtered: {x} > 2")
+        return x > 2
+
+    result = pipeline(logging_gen(), (map, logging_map), (filter, logging_filter))
+
+    assert logs == []
+    first = next(result)
+    assert first == 4  # first to pass filter is 2*2 = 4 > 2
+    assert logs == [
+        "generated: 0",
+        "mapped: 2*0",
+        "filtered: 0 > 2",
+        "generated: 1",
+        "mapped: 2*1",
+        "filtered: 2 > 2",
+        "generated: 2",
+        "mapped: 2*2",
+        "filtered: 4 > 2",
+    ]
+
+    logs.clear()
+    second = next(result)
+    assert second == 6  # second to pass filter is 2*3 = 6 > 2
+    assert logs == ["generated: 3", "mapped: 2*3", "filtered: 6 > 2"]
