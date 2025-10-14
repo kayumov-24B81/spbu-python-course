@@ -1,10 +1,31 @@
-from functools import *
+import functools
+from collections import OrderedDict
+
+
+def _make_hashable(obj):
+    if isinstance(obj, (int, float, str, bool, type(None))):
+        return obj
+
+    elif isinstance(obj, (tuple, list)):
+        return tuple(_make_hashable(item) for item in obj)
+
+    elif isinstance(obj, dict):
+        sorted_items = sorted((k, _make_hashable(v)) for k, v in obj.items())
+        return tuple(sorted_items)
+
+    elif isinstance(obj, set):
+        sorted_items = sorted(_make_hashable(item) for item in obj)
+        return tuple(sorted_items)
+
+    else:
+        return f"{type(obj).__name__} object"
 
 
 def curry_explicit(function, arity):
     if arity < 0:
         raise ValueError("Arity should not be negative")
 
+    @functools.wraps(function)
     def curried(*args):
         if len(args) > arity:
             raise ValueError("Too many arguments for curried function")
@@ -24,7 +45,7 @@ def curry_explicit(function, arity):
 
 def uncurry_explicit(function, arity):
     if arity < 0:
-        raise ValueError("Arity should be positive")
+        raise ValueError("Arity should not be negative")
 
     def uncurried(*args):
         if len(args) != arity:
@@ -39,3 +60,37 @@ def uncurry_explicit(function, arity):
         return result
 
     return uncurried
+
+
+def cache(limit=None):
+    def decorator(function):
+        cache_dict = OrderedDict()
+
+        if limit is None:
+            return function
+
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            hashable_args = _make_hashable(args)
+            hashable_kwargs = _make_hashable(kwargs)
+
+            key = (hashable_args, hashable_kwargs)
+
+            if key in cache_dict:
+                cache_dict.move_to_end(key)
+                print("easy hashed")
+                return cache_dict[key]
+
+            result = function(*args, **kwargs)
+            cache_dict[key] = result
+
+            if len(cache_dict) > limit:
+                cache_dict.popitem(last=False)
+
+            return result
+
+        wrapper.cache_dict = cache_dict
+
+        return wrapper
+
+    return decorator
