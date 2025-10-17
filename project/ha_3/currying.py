@@ -1,8 +1,14 @@
 import functools
 from collections import OrderedDict
+from typing import Any, Callable, Dict, Union
 
 
-def _make_hashable(obj):
+def _make_hashable(obj: Any) -> Union[tuple, str, int, float, bool, None]:
+    """
+    Convert an object to a hashable form for caching keys.
+
+    Handles basic types, collections, and custom objects.
+    """
     if isinstance(obj, (int, float, str, bool, type(None))):
         return obj
 
@@ -21,7 +27,17 @@ def _make_hashable(obj):
         return f"{type(obj).__name__} object"
 
 
-def curry_explicit(function, arity):
+def curry_explicit(function: Callable, arity: int) -> Callable:
+    """
+    Explicitly curry a function with given arity.
+
+    Args:
+        function: Function to curry
+        arity: Number of arguments the function expects
+
+    Returns:
+        Curried version of the function
+    """
     if arity < 0:
         raise ValueError("Arity should not be negative")
 
@@ -43,7 +59,17 @@ def curry_explicit(function, arity):
     return curried
 
 
-def uncurry_explicit(function, arity):
+def uncurry_explicit(function: Callable, arity: int) -> Callable:
+    """
+    Uncurry a curried function back to its original form.
+
+    Args:
+        function: Curried function to uncurry
+        arity: Original number of arguments
+
+    Returns:
+        Uncurried version of the function
+    """
     if arity < 0:
         raise ValueError("Arity should not be negative")
 
@@ -62,7 +88,17 @@ def uncurry_explicit(function, arity):
     return uncurried
 
 
-def cache(limit=None):
+def cache(limit: int = None) -> Callable:
+    """
+    Cache decorator with LRU eviction policy.
+
+    Args:
+        limit: Maximum number of results to cache. None means no caching.
+
+    Returns:
+        Decorated function with caching
+    """
+
     def decorator(function):
         cache_dict = OrderedDict()
 
@@ -78,7 +114,6 @@ def cache(limit=None):
 
             if key in cache_dict:
                 cache_dict.move_to_end(key)
-                print("easy hashed")
                 return cache_dict[key]
 
             result = function(*args, **kwargs)

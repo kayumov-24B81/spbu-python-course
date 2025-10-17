@@ -1,29 +1,46 @@
 import functools
 import inspect
 import copy
+from typing import Any, Callable, Dict, List, Set, TypeVar, Union
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class Evaluated:
-    def __init__(self, function):
+    """Marker for dynamically computed default values."""
+
+    def __init__(self, function: Callable[[], Any]) -> None:
         if not callable(function):
             raise ValueError("Evaluated wraps a callable function")
         self.function = function
 
-    def __call__(self):
+    def __call__(self) -> Any:
         return self.function()
 
 
 class Isolated:
+    """Marker for arguments that should be deep-copied."""
+
     pass
 
 
-def smart_args(check_positional=False):
-    def decorator(function):
-        sign = inspect.signature(function)
+def smart_args(check_positional: bool = False) -> Callable[[F], F]:
+    """
+    Decorator for smart argument processing with Evaluated and Isolated.
 
-        has_evaluated = False
-        has_isolated = False
-        positional_special = []
+    Args:
+        allow_positional: If True, allows Evaluated/Isolated in positional arguments
+
+    Returns:
+        Decorated function with smart argument processing
+    """
+
+    def decorator(function: F) -> F:
+        sign: inspect.Signature = inspect.signature(function)
+
+        has_evaluated: bool = False
+        has_isolated: bool = False
+        positional_special: List[str] = []
 
         for param_name, param in sign.parameters.items():
             if not check_positional:
@@ -51,11 +68,11 @@ def smart_args(check_positional=False):
             )
 
         @functools.wraps(function)
-        def wrapper(*args, **kwargs):
-            bound_args = sign.bind(*args, **kwargs)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            bound_args: inspect.BoundArguments = sign.bind(*args, **kwargs)
             bound_args.apply_defaults()
 
-            arguments = bound_args.arguments
+            arguments: Dict[str, Any] = bound_args.arguments
 
             for param_name, param in sign.parameters.items():
                 if param_name in arguments:
@@ -64,9 +81,9 @@ def smart_args(check_positional=False):
                         arguments[param_name] = copy.deepcopy(arguments[param_name])
 
                     elif isinstance(param.default, Evaluated):
-                        passed_explicitly = False
+                        passed_explicitly: bool = False
 
-                        param_names = list(sign.parameters.keys())
+                        param_names: List[str] = list(sign.parameters.keys())
                         if param_name in param_names:
                             param_index = param_names.index(param_name)
                             if param_index < len(args):
