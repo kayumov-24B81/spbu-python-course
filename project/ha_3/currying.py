@@ -1,10 +1,10 @@
 import functools
 from collections import OrderedDict
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Optional, Hashable, Iterator, Tuple, List
 import inspect
 
 
-def _make_hashable(obj: Any) -> Union[tuple, str, int, float, bool, None]:
+def _make_hashable(obj: Any) -> Hashable:
     """
     Convert an object to a hashable form for caching keys.
 
@@ -17,13 +17,18 @@ def _make_hashable(obj: Any) -> Union[tuple, str, int, float, bool, None]:
         return tuple(_make_hashable(item) for item in obj)
 
     elif isinstance(obj, dict):
-        sorted_items = sorted((k, _make_hashable(v)) for k, v in obj.items())
-        return tuple(sorted_items)
+        dict_pairs: List[Tuple[Hashable, Hashable]] = []
+        for k, v in obj.items():
+            dict_pairs.append((k, _make_hashable(v)))
+        sorted_dict_pairs = sorted(dict_pairs, key=lambda x: str(x[0]))
+        return tuple(sorted_dict_pairs)
 
     elif isinstance(obj, set):
-        sorted_items = sorted(_make_hashable(item) for item in obj)
-        return tuple(sorted_items)
-
+        set_elements: List[Hashable] = []
+        for item in obj:
+            set_elements.append(_make_hashable(item))
+        sorted_set_elements = sorted(set_elements, key=str)
+        return tuple(sorted_set_elements)
     else:
         return f"{type(obj).__name__} object"
 
@@ -89,7 +94,7 @@ def uncurry_explicit(function: Callable, arity: int) -> Callable:
     return uncurried
 
 
-def cache(limit: int = None) -> Callable:
+def cache(limit: Optional[int] = None) -> Callable:
     """
     Cache decorator with LRU eviction policy.
 
@@ -132,6 +137,6 @@ def cache(limit: int = None) -> Callable:
 
         wrapper.cache_dict = cache_dict
 
-        return wrapper
+        return wrapper  # type: ignore[attr-defined]
 
     return decorator

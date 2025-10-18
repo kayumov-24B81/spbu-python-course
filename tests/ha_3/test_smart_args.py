@@ -197,7 +197,7 @@ class TestErrors:
 
     def test_evaluated_not_callable_error(self):
         """Should raise error if Evaluated gets non-callable."""
-        with pytest.raises(AssertionError, match="callable"):
+        with pytest.raises(ValueError, match="callable"):
 
             @smart_args()
             def function(*, a=Evaluated("hello")):

@@ -1,7 +1,7 @@
 import functools
 import inspect
 import copy
-from typing import Any, Callable, Dict, List, Set, TypeVar, Union
+from typing import Any, Callable, Dict, List, TypeVar, cast
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -102,6 +102,6 @@ def smart_args(check_positional: bool = False) -> Callable[[F], F]:
 
             return function(**arguments)
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator
