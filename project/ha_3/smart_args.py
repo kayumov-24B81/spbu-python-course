@@ -44,10 +44,15 @@ def smart_args(check_positional: bool = False) -> Callable[[F], F]:
 
         for param_name, param in sign.parameters.items():
             if not check_positional:
-                if (
-                    isinstance(param.default, (Evaluated, Isolated))
-                    and param.kind != param.KEYWORD_ONLY
-                ):
+                is_special = (param.default is Isolated) or isinstance(
+                    param.default, Evaluated
+                )
+                is_positional = param.kind in (
+                    param.POSITIONAL_OR_KEYWORD,
+                    param.VAR_POSITIONAL,
+                )
+
+                if is_special and is_positional:
                     positional_special.append(param_name)
 
             if isinstance(param.default, Evaluated):

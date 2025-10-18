@@ -4,7 +4,10 @@ from collections import OrderedDict
 
 
 class TestCacheBasic:
+    """Basic cache functionality tests."""
+
     def test_cache_basic_usage(self):
+        """Cache should store and return computed results."""
         call_counter = 0
 
         @cache(limit=3)
@@ -20,6 +23,7 @@ class TestCacheBasic:
         assert call_counter == 1
 
     def test_cache_different_args(self):
+        """Cache should handle different argument combinations."""
         call_counter = 0
 
         @cache(limit=3)
@@ -38,6 +42,7 @@ class TestCacheBasic:
         assert call_counter == 2
 
     def test_cache_disabled(self):
+        """Cache should be disabled when limit is None."""
         call_counter = 0
 
         @cache()
@@ -53,6 +58,7 @@ class TestCacheBasic:
         assert call_counter == 2
 
     def test_cache_LRU_eviction(self):
+        """LRU should evict least recently used items."""
         call_counter = 0
 
         @cache(limit=2)
@@ -71,6 +77,7 @@ class TestCacheBasic:
         assert call_counter == 4
 
     def test_cache_with_kwargs(self):
+        """Cache should handle keyword arguments."""
         call_counter = 0
 
         @cache(limit=3)
@@ -85,6 +92,7 @@ class TestCacheBasic:
         assert call_counter == 2
 
     def test_cache_with_unhashable(self):
+        """Cache should handle unhashable types via conversion."""
         call_counter = 0
 
         @cache(limit=2)
@@ -101,6 +109,7 @@ class TestCacheBasic:
         assert call_counter == 2
 
     def test_cache_with_class(self):
+        """Cache should work with class instances."""
         call_counter = 0
 
         class Dummy:
@@ -121,6 +130,8 @@ class TestCacheBasic:
         assert call_counter == 1
 
     def test_cache_metadata_preservation(self):
+        """Cache should preserve function metadata."""
+
         @cache(limit=1)
         def example(x):
             """Function for tests"""
