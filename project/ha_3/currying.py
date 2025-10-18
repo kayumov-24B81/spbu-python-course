@@ -1,6 +1,7 @@
 import functools
 from collections import OrderedDict
 from typing import Any, Callable, Dict, Union
+import inspect
 
 
 def _make_hashable(obj: Any) -> Union[tuple, str, int, float, bool, None]:
@@ -107,8 +108,13 @@ def cache(limit: int = None) -> Callable:
 
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
-            hashable_args = _make_hashable(args)
-            hashable_kwargs = _make_hashable(kwargs)
+            sig = inspect.signature(function)
+
+            bound_args = sig.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+
+            hashable_args = _make_hashable(bound_args.args)
+            hashable_kwargs = _make_hashable(bound_args.kwargs)
 
             key = (hashable_args, hashable_kwargs)
 

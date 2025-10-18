@@ -1,5 +1,5 @@
 import pytest
-from project.ha_3.currying import *
+from project.ha_3.currying import curry_explicit, uncurry_explicit
 
 
 class TestCurryExplicit:
@@ -95,7 +95,7 @@ class TestUncurryExplicit:
             return "helo"
 
         uncurried = uncurry_explicit(const_curried, 0)
-        assert uncurried == "helo"
+        assert uncurried() == "helo"
 
     def test_single_argument_uncurry(self):
         def single_curried(x):
