@@ -99,21 +99,89 @@ class BettingInterface:
         for name in self.BET_CONFIG:
             print(f" {name}: {self.BET_CONFIG[name]['description']}")
 
-    def _recieve_bet(self):
+    def _receive_bet_type(self):
         while True:
-            bet_type = input("\nChoose the bet:\n")
-            if bet_type in self.BET_CONFIG.keys():
-                break
-            print(f"{bet_type} is invalid bet!")
+            bet_type = (
+                input("\nChoose bet type (or 'quit' to cancel): ").strip().lower()
+            )
 
-        bet_choice = self.BET_CONFIG[bet_type]["converter"](
-            input(self.BET_CONFIG[bet_type]["message"])
-        )
-        return bet_type, bet_choice
+            if bet_type == "quit":
+                return None
+            elif bet_type in self.BET_CONFIG:
+                return bet_type
+            else:
+                print(f"'{bet_type}' is not a valid bet type!")
 
-    def place_bet_flow(self):
+    def _receive_bet_choice(self, bet_type):
+        config = self.BET_CONFIG[bet_type]
+
+        while True:
+            try:
+                user_input = input(
+                    config["message"] + " (or 'back' to change bet type): "
+                ).strip()
+
+                if user_input.lower() == "back":
+                    return None
+
+                bet_choice = config["converter"](user_input)
+                return bet_choice
+            except (ValueError, Exception) as e:
+                print(f"Invalid input: {e}")
+
+    def _receive_bet_amount(self, max_bet):
+        while True:
+            try:
+                user_input = input(
+                    f"\nEnter bet amount (1-{max_bet}, or '0' to cancel): "
+                ).strip()
+
+                if user_input == "0":
+                    return None
+
+                bet_amount = int(user_input)
+
+                if bet_amount <= 0:
+                    print("Bet amount must be positive!")
+                elif bet_amount > max_bet:
+                    print(
+                        f"Bet amount (${bet_amount}) exceeds your balance (${max_bet})!"
+                    )
+                else:
+                    return bet_amount
+
+            except ValueError:
+                print("Please enter a valid number!")
+
+    def get_validated_bet(self, max_bet):
         self._show_betting_options()
-        bet_type, bet_choice = self._recieve_bet()
 
-        bet = self.bet_factory.create_bet(bet_type, 100, choice=bet_choice)
-        print(type(bet).__name__)
+        bet_type = self._receive_bet_type()
+        if bet_type is None:
+            return None
+
+        bet_amount = self._receive_bet_amount(max_bet)
+        if bet_amount is None:
+            return None
+
+        for attempt in range(3):
+            bet_choice = self._receive_bet_choice(bet_type)
+            if bet_choice is None:
+                return None
+
+            bet = self.bet_factory.create_bet(bet_type, bet_amount, choice=bet_choice)
+
+            if bet.validate():
+                return bet
+            else:
+                remaining_attempts = 2 - attempt
+                if remaining_attempts > 0:
+                    print(f"Invalid parameters. {remaining_attempts} attempts left.")
+                else:
+                    print("Too many failed attempts. Bet cancelled.")
+                    return None
+
+        return None
+
+    def get_validated_bet(self, max_bet):
+        return self.get_validated_bet(max_bet)
