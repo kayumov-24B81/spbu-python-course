@@ -1,7 +1,15 @@
 from bets import BetFactory
+from typing import Optional, Dict, Any, Callable, Union, List
 
 
 class BettingInterface:
+    """
+    A user interface for placing various types of roulette bets.
+
+    Provides interactive prompts for bet type selection, parameter input,
+    and amount specification with validation.
+    """
+
     BET_CONFIG = {
         "straight": {
             "description": "Bet on a single number",
@@ -50,15 +58,31 @@ class BettingInterface:
         },
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the betting interface with a bet factory."""
+
         self.bet_factory = BetFactory()
 
-    def _show_betting_options(self):
+    def _show_betting_options(self) -> None:
+        """
+        Display all available betting options to the user.
+
+        Shows each bet type with its description in a formatted list.
+        """
         print("AVAILABLE BETS: ")
         for name in self.BET_CONFIG:
             print(f" {name}: {self.BET_CONFIG[name]['description']}")
 
-    def _receive_bet_type(self):
+    def _receive_bet_type(self) -> Optional[str]:
+        """
+        Prompt user to select a bet type.
+
+        Returns:
+            The selected bet type as string, or None if user cancels
+
+        Note:
+            User can type 'quit' to cancel the betting process
+        """
         while True:
             bet_type = (
                 input("\nChoose bet type (or 'quit' to cancel): ").strip().lower()
@@ -71,7 +95,21 @@ class BettingInterface:
             else:
                 print(f"'{bet_type}' is not a valid bet type!")
 
-    def _receive_bet_choice(self, bet_type):
+    def _receive_bet_choice(
+        self, bet_type: str
+    ) -> Optional[Union[int, str, List[int]]]:
+        """
+        Prompt user for bet-specific parameters based on bet type.
+
+        Args:
+            bet_type: The type of bet being placed
+
+        Returns:
+            The converted user input for the bet parameters, or None if user goes back
+
+        Raises:
+            Handles conversion errors and prompts user again
+        """
         config = self.BET_CONFIG[bet_type]
 
         while True:
@@ -88,7 +126,19 @@ class BettingInterface:
             except (ValueError, Exception) as e:
                 print(f"Invalid input: {e}")
 
-    def _receive_bet_amount(self, max_bet):
+    def _receive_bet_amount(self, max_bet: float) -> Optional[float]:
+        """
+        Prompt user for bet amount with validation.
+
+        Args:
+            max_bet: The maximum allowed bet amount (usually player's balance)
+
+        Returns:
+            The validated bet amount, or None if user cancels
+
+        Note:
+            Validates that amount is positive and doesn't exceed max_bet
+        """
         while True:
             try:
                 user_input = input(
@@ -112,22 +162,43 @@ class BettingInterface:
             except ValueError:
                 print("Please enter a valid number!")
 
-    def get_validated_bet(self, max_bet):
+    def get_validated_bet(self, max_bet: float) -> Optional[Any]:
+        """
+        Guide user through the complete bet placement process with validation.
+
+        Args:
+            max_bet: The maximum amount the user can bet
+
+        Returns:
+            A validated Bet object if successful, None if user cancels or validation fails
+
+        Process:
+            1. Show available bet types
+            2. Get bet type selection
+            3. Get bet amount
+            4. Get bet-specific parameters
+            5. Validate the complete bet
+            6. Allow up to 3 attempts for valid parameters
+        """
         self._show_betting_options()
 
+        # Step 1: Get bet type
         bet_type = self._receive_bet_type()
         if bet_type is None:
             return None
 
+        # Step 2: Get bet amount
         bet_amount = self._receive_bet_amount(max_bet)
         if bet_amount is None:
             return None
 
+        # Step 3: Get bet parameters with validation
         for attempt in range(3):
             bet_choice = self._receive_bet_choice(bet_type)
             if bet_choice is None:
                 return None
 
+            # Create and validate bet
             bet = self.bet_factory.create_bet(bet_type, bet_amount, choice=bet_choice)
 
             if bet.validate():
