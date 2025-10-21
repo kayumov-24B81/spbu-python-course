@@ -9,12 +9,19 @@ class Bet(ABC):
     def get_payout(self):
         return self.payout
 
+    def get_amount(self):
+        return self.amount
+
     @abstractmethod
     def validate(self):
         pass
 
     @abstractmethod
     def is_winning(self, winning_number):
+        pass
+
+    @abstractmethod
+    def get_type(self):
         pass
 
 
@@ -28,6 +35,9 @@ class StraightBet(Bet):
 
     def is_winning(self, winning_number):
         return self.number == winning_number
+
+    def get_type(self):
+        return f"straight: {self.number}"
 
 
 class SplitBet(Bet):
@@ -46,19 +56,25 @@ class SplitBet(Bet):
     def is_winning(self, winning_number):
         return winning_number in self.numbers
 
+    def get_type(self):
+        return f"split: {self.numbers[0]}, {self.numbers[1]}"
+
 
 class StreetBet(Bet):
     def __init__(self, amount, street_number):
         super().__init__(amount, 11)
         self.street_number = street_number
 
-    def validate(self, street_number):
-        is_on_board = street_number < 34 and street_number > 0
-        return street_number % 3 == 0 and is_on_board
+    def validate(self):
+        is_on_board = self.street_number < 34 and self.street_number > 0
+        return self.street_number % 3 == 1 and is_on_board
 
     def is_winning(self, winning_number):
         numbers_in_street = range(self.street_number, self.street_number + 3)
         return winning_number in numbers_in_street
+
+    def get_type(self):
+        return f"street: street number - {self.street_number}"
 
 
 class CornerBet(Bet):
@@ -84,6 +100,9 @@ class CornerBet(Bet):
     def is_winning(self, winning_number):
         return winning_number in self.numbers
 
+    def get_type(self):
+        return f"corner: {self.numbers[0]}, {self.numbers[1]}, {self.numbers[2]}, {self.numbers[3]}"
+
 
 class LineBet(Bet):
     def __init__(self, amount, line_number):
@@ -98,6 +117,9 @@ class LineBet(Bet):
         numbers_in_line = list(range(self.line_number, self.line_number + 6))
         return winning_number in numbers_in_line
 
+    def get_type(self):
+        return f"line: line number - {self.line_number}"
+
 
 class ColumnBet(Bet):
     def __init__(self, amount, column_number):
@@ -109,6 +131,9 @@ class ColumnBet(Bet):
 
     def is_winning(self, winning_number):
         return winning_number % 3 == self.column_number % 3
+
+    def get_type(self):
+        return f"column: column number - {self.column_number}"
 
 
 class ColorBet(Bet):
@@ -140,10 +165,15 @@ class ColorBet(Bet):
             34,
             36,
         ]
+        if winning_number == 0:
+            return False
         if self.color == "red":
             return winning_number in red_numbers
         elif self.color == "black":
             return winning_number < 37 and not winning_number in red_numbers
+
+    def get_type(self):
+        return "color: " + self.color
 
 
 class EvenOddBet(Bet):
@@ -152,10 +182,13 @@ class EvenOddBet(Bet):
         self.even_odd = even_odd
 
     def validate(self):
-        return self.even_odd in [0, 1]
+        return self.even_odd in ["even", "odd"]
 
     def is_winning(self, winning_number):
         return winning_number % 2 == self.even_odd
+
+    def get_type(self):
+        return "even or odd: " + self.even_odd
 
 
 class HighLowBet(Bet):
@@ -171,6 +204,9 @@ class HighLowBet(Bet):
             return winning_number in list(range(19, 37))
         elif self.high_low == "low":
             return winning_number in list(range(1, 19))
+
+    def get_type(self):
+        return "high or low: " + self.high_low
 
 
 class BetFactory:

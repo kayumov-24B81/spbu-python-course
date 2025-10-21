@@ -1,45 +1,4 @@
-import random
-from bets import *
-
-
-class Roulette:
-    def __init__(self):
-        self.numbers = range(0, 37)
-        self.colors = self._assign_colors()
-
-    def _assign_colors(self):
-        colors = {}
-        red_numbers = [
-            1,
-            3,
-            5,
-            7,
-            9,
-            12,
-            14,
-            16,
-            18,
-            19,
-            21,
-            23,
-            25,
-            27,
-            30,
-            32,
-            34,
-            36,
-        ]
-        for number in self.numbers:
-            if number == 0:
-                colors[number] = "green"
-            elif number in red_numbers:
-                colors[number] = "red"
-            else:
-                colors[number] == "black"
-
-    def spin(self):
-        number = random.choice(self.numbers)
-        return (number, self.colors[number])
+from bets import BetFactory
 
 
 class BettingInterface:
@@ -133,7 +92,7 @@ class BettingInterface:
         while True:
             try:
                 user_input = input(
-                    f"\nEnter bet amount (1-{max_bet}, or '0' to cancel): "
+                    f"Enter bet amount (1-{max_bet}, or '0' to cancel): "
                 ).strip()
 
                 if user_input == "0":
@@ -182,6 +141,3 @@ class BettingInterface:
                     return None
 
         return None
-
-    def get_validated_bet(self, max_bet):
-        return self.get_validated_bet(max_bet)
