@@ -1,5 +1,5 @@
 import random
-from bets import *
+from project.ha_4.bets import *
 
 
 class Roulette:

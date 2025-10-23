@@ -1,4 +1,4 @@
-from bets import *
+from project.ha_4.bets import *
 from typing import List
 
 
@@ -49,7 +49,7 @@ class Player:
         """
         return self.current_bet
 
-    def get_name(self) -> set:
+    def get_name(self) -> str:
         """
         Get the player's name.
 

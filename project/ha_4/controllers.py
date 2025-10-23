@@ -1,5 +1,5 @@
-from player import Player
-from betting_interface import BettingInterface, BetFactory
+from project.ha_4.player import Player
+from project.ha_4.betting_interface import BettingInterface, BetFactory
 import random
 from typing import Optional, Dict, List, Tuple, Any
 
@@ -155,7 +155,6 @@ class AggressiveBotController:
             "street": 0.15,
             "corner": 0.10,
             "line": 0.08,
-            "dozen": 0.05,
             "column": 0.02,
         }
 
@@ -204,9 +203,6 @@ class AggressiveBotController:
 
         elif bet_type == "line":
             return random.choice([1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31])
-
-        elif bet_type == "dozen":
-            return random.choice([1, 2, 3])
 
         elif bet_type == "column":
             return random.choice([1, 2, 3])

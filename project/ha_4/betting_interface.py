@@ -1,5 +1,5 @@
-from bets import BetFactory
-from typing import Optional, Dict, Any, Callable, Union, List
+from project.ha_4.bets import BetFactory
+from typing import Optional, Any, Union, List
 
 
 class BettingInterface:

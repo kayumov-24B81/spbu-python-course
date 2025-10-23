@@ -134,6 +134,9 @@ class SplitBet(Bet):
         Returns:
             True if numbers are valid adjacent numbers (difference of 1 or 3)
         """
+        if len(self.numbers) != 2:
+            return False
+
         for number in self.numbers:
             if number > 36 or number < 0:
                 return False
@@ -184,7 +187,7 @@ class StreetBet(Bet):
         Returns:
             True if street number is valid (1-34 and divisible by 3 with remainder 1)
         """
-        is_on_board = self.street_number < 34 and self.street_number > 0
+        is_on_board = self.street_number < 35 and self.street_number > 0
         return self.street_number % 3 == 1 and is_on_board
 
     def is_winning(self, winning_number) -> bool:
@@ -232,7 +235,7 @@ class CornerBet(Bet):
             True if numbers form a valid corner/square pattern
         """
         for number in self.numbers:
-            if number > 36 and number < 0:
+            if number > 36 or number < 1:
                 return False
 
         if len(self.numbers) == 4:
@@ -462,7 +465,10 @@ class EvenOddBet(Bet):
         Returns:
             True if winning number matches the even/odd choice (0 always loses)
         """
-        return winning_number % 2 == self.even_odd
+        if self.even_odd == "even":
+            return winning_number % 2 == 0 and winning_number != 0
+        elif self.even_odd == "odd":
+            return winning_number % 2 == 1
 
     def get_type(self) -> str:
         """

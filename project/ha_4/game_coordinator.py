@@ -1,5 +1,5 @@
-from bets import *
-from controllers import (
+from project.ha_4.bets import *
+from project.ha_4.controllers import (
     BettingInterface,
     ConservativeBotController,
     PatternBotController,
@@ -7,7 +7,7 @@ from controllers import (
     AggressiveBotController,
     Player,
 )
-from roulette import Roulette
+from project.ha_4.roulette import Roulette
 from typing import List, Optional, Dict, Type, Any, Tuple
 
 
