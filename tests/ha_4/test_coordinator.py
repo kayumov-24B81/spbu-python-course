@@ -267,7 +267,7 @@ class TestGameCoordinatorRoundFlow:
         ), patch.object(
             game, "_check_win_condition", return_value=None
         ), patch(
-            "builtins.input"
+            "builtins.input", return_value="yes"
         ), patch(
             "builtins.print"
         ):
