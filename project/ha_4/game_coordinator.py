@@ -1,3 +1,8 @@
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from project.ha_4.bets import *
 from project.ha_4.controllers import (
     BettingInterface,
@@ -79,7 +84,7 @@ class GameCoordinator:
                 f"WINNER (by highest balance): {winner.get_name()} with ${winner.get_balance()}"
             )
 
-        print(f"\nTotal rounds played: {self.current_round}")
+        print(f"\nTotal rounds played: {self.current_round - 1}")
         print("\nFinal standings:")
         for i, player in enumerate(players_sorted, 1):
             print(f"{i}.: {player.get_name()}")
@@ -93,8 +98,9 @@ class GameCoordinator:
         """
         active_players: List[Player] = [p for p in self.players if p.get_balance() > 0]
 
-        if self.current_round >= self.max_rounds:
+        if self.current_round > self.max_rounds:
             print(f"\nMAXIMUM ROUNDS REACHED ({self.max_rounds})!")
+            self._declare_winner()
             return True
 
         if len(active_players) == 0:
@@ -121,6 +127,10 @@ class GameCoordinator:
             if hasattr(controller, "betting_interface"):
                 return player
         return None
+
+    def _reset_bets(self) -> None:
+        for player in self.players:
+            player.place_bet(None)
 
     def _setup_game(self) -> None:
         """
@@ -171,11 +181,12 @@ class GameCoordinator:
             9. Prompt for next round (if human player active)
         """
         self.current_round += 1
-        print(f"=== ROUND {self.current_round}/{self.max_rounds}===")
 
         # Check if game should end
         if self._check_game_over():
             return False
+
+        print(f"=== ROUND {self.current_round}/{self.max_rounds}===")
 
         # Update pattern bots with previous winning numbers
         for player in self.players:
@@ -262,6 +273,9 @@ class GameCoordinator:
             return False
 
         human_player: Optional[Player] = self._get_human_player()
+
+        # Make all players bets None
+        self._reset_bets()
 
         # Prompt for next round (if human player is active)
         if human_player and human_player.get_balance() > 0:

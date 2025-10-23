@@ -1,5 +1,5 @@
 from project.ha_4.bets import *
-from typing import List
+from typing import Optional
 
 
 class Player:
@@ -17,7 +17,7 @@ class Player:
         self.balance = balance
         self.current_bet: Bet = None
 
-    def place_bet(self, bet: Bet) -> bool:
+    def place_bet(self, bet: Optional[Bet]) -> bool:
         """
         Place a bet by deducting the amount from balance and adding to current bets.
 
@@ -26,10 +26,14 @@ class Player:
 
         Returns:
             True if bet was successfully placed
+            False if bet is None
         """
-        self.balance -= bet.amount
-        self.current_bet = bet
-        return True
+        if bet is not None:
+            self.balance -= bet.amount
+            self.current_bet = bet
+            return True
+
+        return False
 
     def get_balance(self) -> float:
         """

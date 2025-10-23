@@ -291,8 +291,8 @@ class LineBet(Bet):
         Returns:
             True if line number is valid (1-31 and divisible by 3 with remainder 1)
         """
-        is_on_board = self.line_number < 31 and self.line_number > 0
-        return self.line_number % 3 == 0 and is_on_board
+        is_on_board = self.line_number <= 31 and self.line_number > 0
+        return self.line_number % 3 == 1 and is_on_board
 
     def is_winning(self, winning_number: int) -> bool:
         """
