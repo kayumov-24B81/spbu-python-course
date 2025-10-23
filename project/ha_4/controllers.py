@@ -281,7 +281,7 @@ class PatternBotController:
         """
         self.player = player
         self.bet_factory = BetFactory()
-        self.last_5_numbers = []
+        self.last_5_numbers: List[int] = []
         self.weights_dict = {"color": 0.4, "even_odd": 0.4, "high_low": 0.2}
 
     def _weighted_type(self) -> str:
@@ -392,7 +392,7 @@ class PatternBotController:
 
         return None
 
-    def update_history(self, winning_number) -> None:
+    def update_history(self, winning_number: int) -> None:
         """
         Update history with latest winning number for pattern analysis.
 

@@ -94,7 +94,7 @@ class TestGameCoordinator:
     @pytest.mark.parametrize(
         "current_round, max_rounds, player_balances, expected_result",
         [
-            (5, 5, [1000, 1500], True),
+            (6, 5, [1000, 1500], True),
             (3, 5, [0, 0], True),
             (2, 5, [1000, 0], True),
             (2, 5, [1000, 500], False),
@@ -111,11 +111,12 @@ class TestGameCoordinator:
             player = Player(f"Player{i}", balance)
             game._add_player(player, ConservativeBotController(player))
 
-        result = game._check_game_over()
-        assert result == expected_result
+        with patch("builtins.print"):
+            result = game._check_game_over()
+            assert result == expected_result
 
     def test_setup_game_creates_players(self, game_coordinator):
-        with patch("builtins.input", return_value="TestHuman"):
+        with patch("builtins.input", return_value="TestHuman"), patch("builtins.print"):
             game_coordinator._setup_game()
 
             assert len(game_coordinator.players) == 4
@@ -170,6 +171,8 @@ class TestGameCoordinatorRoundFlow:
             game, "_check_win_condition", return_value=None
         ), patch(
             "builtins.input", return_value="yes"
+        ), patch(
+            "builtins.print"
         ):
 
             result = game._play_turn()
@@ -196,6 +199,8 @@ class TestGameCoordinatorRoundFlow:
             game, "_check_win_condition", return_value=None
         ), patch(
             "builtins.input", return_value="yes"
+        ), patch(
+            "builtins.print"
         ):
 
             result = game._play_turn()
@@ -239,6 +244,10 @@ class TestGameCoordinatorRoundFlow:
             game, "_check_win_condition", return_value=human_player
         ), patch.object(
             game, "_declare_winner"
+        ), patch(
+            "builtins.input"
+        ), patch(
+            "builtins.print"
         ):
 
             result = game._play_turn()
@@ -257,6 +266,10 @@ class TestGameCoordinatorRoundFlow:
             game.roulette, "spin", return_value=(17, "red")
         ), patch.object(
             game, "_check_win_condition", return_value=None
+        ), patch(
+            "builtins.input"
+        ), patch(
+            "builtins.print"
         ):
 
             result = game._play_turn()

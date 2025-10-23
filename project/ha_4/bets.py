@@ -421,6 +421,7 @@ class ColorBet(Bet):
             return winning_number in red_numbers
         elif self.color == "black":
             return winning_number < 37 and not winning_number in red_numbers
+        return False
 
     def get_type(self) -> str:
         """
@@ -469,6 +470,7 @@ class EvenOddBet(Bet):
             return winning_number % 2 == 0 and winning_number != 0
         elif self.even_odd == "odd":
             return winning_number % 2 == 1
+        return False
 
     def get_type(self) -> str:
         """
@@ -517,6 +519,7 @@ class HighLowBet(Bet):
             return winning_number in list(range(19, 37))
         elif self.high_low == "low":
             return winning_number in list(range(1, 19))
+        return False
 
     def get_type(self) -> str:
         """

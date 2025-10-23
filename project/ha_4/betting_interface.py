@@ -1,5 +1,5 @@
 from project.ha_4.bets import BetFactory
-from typing import Optional, Any, Union, List
+from typing import Optional, Any, Union, List, Callable, Dict, cast
 
 
 class BettingInterface:
@@ -110,18 +110,22 @@ class BettingInterface:
         Raises:
             Handles conversion errors and prompts user again
         """
-        config = self.BET_CONFIG[bet_type]
+        config_item = cast(Dict[str, Any], self.BET_CONFIG[bet_type])
+        config_message = cast(str, config_item["message"])
+        input_converter = cast(
+            Callable[[str], Union[int, str, List[int]]], config_item["converter"]
+        )
 
         while True:
             try:
                 user_input = input(
-                    config["message"] + " (or 'back' to change bet type): "
+                    config_message + " (or 'back' to change bet type): "
                 ).strip()
 
                 if user_input.lower() == "back":
                     return None
 
-                bet_choice = config["converter"](user_input)
+                bet_choice = input_converter(user_input)
                 return bet_choice
             except (ValueError, Exception) as e:
                 print(f"Invalid input: {e}")
@@ -148,7 +152,7 @@ class BettingInterface:
                 if user_input == "0":
                     return None
 
-                bet_amount = int(user_input)
+                bet_amount = float(user_input)
 
                 if bet_amount <= 0:
                     print("Bet amount must be positive!")

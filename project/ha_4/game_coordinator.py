@@ -200,8 +200,8 @@ class GameCoordinator:
         active_players: int = 0
         for player in self.players:
             if player.get_balance() > 0:
-                controller: Any = self.controllers[player]
-                bet: Bet = controller.make_bet_decision()
+                players_controller: Any = self.controllers[player]
+                bet: Bet = players_controller.make_bet_decision()
                 if bet:
                     if player.place_bet(bet):
                         active_players += 1
@@ -211,34 +211,28 @@ class GameCoordinator:
                     else:
                         print(f"{player.get_name()} skips this round.")
 
-        # Spin the wheel even if no bets were placed
-        if active_players == 0:
-            print("No one placed bets this round. Spinning anyway...")
-            winning_number, winning_color = self.roulette.spin()
-            self.round_history.append(winning_number)
-            if len(self.round_history) > 10:
-                self.round_history.pop(0)
-            print(f"Winning number: {winning_number}, {winning_color}")
-            print("No winners this round.")
-            return not self._check_game_over()
-
-        # Spin roulette wheel
         winning_number: int
         winning_color: str
         winning_number, winning_color = self.roulette.spin()
         print(f"Winning number: {winning_number}, {winning_color}")
+
+        self.round_history.append(winning_number)
+        if len(self.round_history) > 10:
+            self.round_history.pop(0)
 
         # Calculate and distribute winnings
         print("\n--- ROUND RESULTS ---")
         has_winners: bool = False
         for player in self.players:
             player_won: bool = False
-            winnings: int = 0
-            bet: Bet = player.get_current_bet()
+            winnings: float = 0
+            current_bet: Optional[Bet] = player.get_current_bet()
 
-            if bet:
-                if bet.is_winning(winning_number):
-                    payout: float = (bet.get_payout() + 1) * bet.get_amount()
+            if current_bet:
+                if current_bet.is_winning(winning_number):
+                    payout: float = (
+                        current_bet.get_payout() + 1
+                    ) * current_bet.get_amount()
                     winnings += payout
                     player_won = True
                     has_winners = True
@@ -258,11 +252,11 @@ class GameCoordinator:
         # Display player balances
         print(f"\n--- PLAYERS BALANCES (Goal: ${self.winning_balance})")
         for player in self.players:
-            balance: float = player.get_balance()
+            balance = player.get_balance()
             if balance == 0:
-                status: str = "LOST TO CASINO"
+                status = "LOST TO CASINO"
             else:
-                status = balance
+                status = f"${balance:.2f}"
             print(f"{player.get_name()}: {status}")
 
         # Check for winner

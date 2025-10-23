@@ -15,7 +15,7 @@ class Player:
         """
         self.name = name
         self.balance = balance
-        self.current_bet: Bet = None
+        self.current_bet: Optional[Bet] = None
 
     def place_bet(self, bet: Optional[Bet]) -> bool:
         """
@@ -44,7 +44,7 @@ class Player:
         """
         return self.balance
 
-    def get_current_bet(self) -> Bet:
+    def get_current_bet(self) -> Optional[Bet]:
         """
         Get current active bet.
 
