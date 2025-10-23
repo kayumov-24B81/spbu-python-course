@@ -1,7 +1,7 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from project.ha_4.betting_interface import BettingInterface
-from project.ha_4.bets import StraightBet, SplitBet, ColorBet
+from project.ha_4.bets import StraightBet
 
 
 class TestBettingInterface:

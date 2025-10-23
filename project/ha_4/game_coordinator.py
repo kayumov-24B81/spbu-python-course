@@ -54,9 +54,15 @@ class GameCoordinator:
         Returns:
             Player who reached winning balance, or None if no winner yet
         """
+        winners: List[Player] = []
         for player in self.players:
             if player.get_balance() >= self.winning_balance:
-                return player
+                winners.append(player)
+
+        if winners:
+            winners_sorted = sorted(winners, key=lambda p: p.get_balance())
+            return winners_sorted[-1]
+
         return None
 
     def _declare_winner(self) -> None:
@@ -86,6 +92,7 @@ class GameCoordinator:
             True if game should end, False otherwise
         """
         active_players: List[Player] = [p for p in self.players if p.get_balance() > 0]
+
         if self.current_round >= self.max_rounds:
             print(f"\nMAXIMUM ROUNDS REACHED ({self.max_rounds})!")
             return True
@@ -93,7 +100,14 @@ class GameCoordinator:
         if len(active_players) == 0:
             print(f"\nALL PLAYERS ARE BROKE")
             self._declare_winner()
-            return False
+            return True
+
+        if len(active_players) == 1:
+            print(f"\nONLY ONE PLAYER HAS CASH")
+            self._declare_winner()
+            return True
+
+        return False
 
     def _get_human_player(self) -> Optional[Player]:
         """
@@ -210,11 +224,13 @@ class GameCoordinator:
             player_won: bool = False
             winnings: int = 0
             bet: Bet = player.get_current_bet()
-            if bet.is_winning(winning_number):
-                payout: float = (bet.get_payout() + 1) * bet.get_amount()
-                winnings += payout
-                player_won = True
-                has_winners = True
+
+            if bet:
+                if bet.is_winning(winning_number):
+                    payout: float = (bet.get_payout() + 1) * bet.get_amount()
+                    winnings += payout
+                    player_won = True
+                    has_winners = True
 
             if player_won:
                 player.add_balance(winnings)
@@ -222,11 +238,8 @@ class GameCoordinator:
 
         # Update bot statistics
         controller = self.controllers[player]
-        if hasattr(controller, "update_stats"):
-            won: bool = any(
-                bet.is_winning(winning_number) for bet in player.current_bets
-            )
-            controller.update_stats(won)
+        if hasattr(controller, "update_history"):
+            controller.update_history(winning_number)
 
         if not has_winners:
             print("No winners this round!")
