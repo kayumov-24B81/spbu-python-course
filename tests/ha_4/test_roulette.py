@@ -5,23 +5,34 @@ from project.ha_4.bets import StraightBet
 
 
 class TestRoulette:
+    """
+    Unit tests for Roulette class
+
+    Tests roulette wheel functionality, number generation, and color mapping.
+    """
+
     @pytest.fixture
     def roulette(self):
+        """Fixture providing a Roulette instance"""
         return Roulette()
 
     def test_initialization(self, roulette):
+        """Tests that Roulette initializes successfully"""
         assert roulette is not None
 
     def test_spin_returns_tuple(self, roulette):
+        """Tests that spin returns a tuple of (number, color)"""
         result = roulette.spin()
         assert isinstance(result, tuple)
         assert len(result) == 2
 
     def test_spin_returns_valid_number_range(self, roulette):
+        """Tests that spin returns numbers in valid roulette range (0-36)"""
         number, color = roulette.spin()
         assert 0 <= number <= 36
 
     def test_spin_returns_valid_color(self, roulette):
+        """Tests that spin returns valid roulette colors"""
         number, color = roulette.spin()
         assert color in ["red", "black", "green"]
 
@@ -37,12 +48,14 @@ class TestRoulette:
         ],
     )
     def test_color_mapping(self, roulette, mock_number, expected_color):
+        """Tests that numbers map to correct colors according to roulette rules"""
         with patch("random.choice", return_value=mock_number):
             number, color = roulette.spin()
             assert number == mock_number
             assert color == expected_color
 
     def test_spin_distribution(self, roulette):
+        """Tests that multiple spins produce varied results within expected ranges"""
         results = []
         colors = []
 
@@ -62,12 +75,14 @@ class TestRoulette:
         assert len(unique_colors) >= 2
 
     def test_zero_is_green(self, roulette):
+        """Tests that number 0 always returns green color"""
         with patch("random.choice", return_value=0):
             number, color = roulette.spin()
             assert number == 0
             assert color == "green"
 
     def test_red_numbers_correct(self, roulette):
+        """Tests all standard red numbers return correct color"""
         red_numbers = [
             1,
             3,
@@ -95,6 +110,7 @@ class TestRoulette:
                 assert color == "red"
 
     def test_black_numbers_correct(self, roulette):
+        """Tests all standard black numbers return correct color"""
         black_numbers = [
             2,
             4,
@@ -123,7 +139,14 @@ class TestRoulette:
 
 
 class TestRouletteGameIntegration:
+    """
+    Integration tests for Roulette with betting system
+
+    Tests how roulette results interact with bet outcomes.
+    """
+
     def test_roulette_results_affect_bets(self):
+        """Tests that roulette spin results correctly determine bet wins/losses"""
         roulette = Roulette()
 
         bet = StraightBet(100, 17)
@@ -137,6 +160,7 @@ class TestRouletteGameIntegration:
             assert bet.is_winning(losing_number) == False
 
     def test_multiple_spins_produce_different_results(self):
+        """Tests that consecutive spins produce varied outcomes"""
         roulette = Roulette()
         results = set()
 
@@ -147,6 +171,7 @@ class TestRouletteGameIntegration:
         assert len(results) > 1
 
     def test_roulette_state_independence(self):
+        """Tests that multiple roulette instances operate independently"""
         roulette1 = Roulette()
         roulette2 = Roulette()
 
@@ -159,7 +184,14 @@ class TestRouletteGameIntegration:
 
 
 class TestRouletteEdgeCases:
+    """
+    Tests for edge cases and statistical properties
+
+    Tests comprehensive number coverage and color distribution.
+    """
+
     def test_all_possible_numbers_generated(self):
+        """Tests that all roulette numbers (0-36) can be generated"""
         roulette = Roulette()
         generated_numbers = set()
 
@@ -170,6 +202,12 @@ class TestRouletteEdgeCases:
         assert generated_numbers == set(range(0, 37))
 
     def test_color_distribution_approximately_correct(self):
+        """
+        Tests that color distribution follows expected roulette probabilities:
+        - ~48.6% red (18/37)
+        - ~48.6% black (18/37)
+        - ~2.7% green (1/37)
+        """
         roulette = Roulette()
 
         red_count = 0

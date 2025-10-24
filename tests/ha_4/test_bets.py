@@ -3,11 +3,18 @@ import pytest
 
 
 class TestStraightBet:
+    """
+    Tests for Straight Bet (single number bet)
+
+    Bet on a single number from 0 to 36. Payout 35:1.
+    """
+
     @pytest.mark.parametrize(
         "number, is_valid",
         [(0, True), (17, True), (36, True), (-1, False), (37, False), (100, False)],
     )
     def test_straight_bet_validation(self, number, is_valid):
+        """Tests number validation for straight bets"""
         bet = StraightBet(100, number)
         assert bet.validate() == is_valid
 
@@ -23,11 +30,19 @@ class TestStraightBet:
     def test_straight_bet_winning_conditions(
         self, bet_number, winning_number, should_win
     ):
+        """Tests winning conditions for straight bets"""
         bet = StraightBet(100, bet_number)
         assert bet.is_winning(winning_number) == should_win
 
 
 class TestSplitBet:
+    """
+    Tests for Split Bet (two adjacent numbers)
+
+    Bet on two adjacent numbers. Payout 17:1.
+    Numbers must be vertically or horizontally adjacent on roulette layout.
+    """
+
     @pytest.mark.parametrize(
         "numbers, is_valid",
         [
@@ -42,6 +57,7 @@ class TestSplitBet:
         ],
     )
     def test_split_bet_validation(self, numbers, is_valid):
+        """Tests number pair validation for split bets"""
         bet = SplitBet(100, numbers)
         assert bet.validate() == is_valid
 
@@ -55,11 +71,19 @@ class TestSplitBet:
         ],
     )
     def test_split_bet_winning_conditions(self, numbers, winning_number, should_win):
+        """Tests winning conditions for split bets"""
         bet = SplitBet(100, numbers)
         assert bet.is_winning(winning_number) == should_win
 
 
 class TestStreetBet:
+    """
+    Tests for Street Bet (three numbers in a row)
+
+    Bet on three consecutive numbers in a horizontal line. Payout 11:1.
+    Street numbers: 1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34
+    """
+
     @pytest.mark.parametrize(
         "street_number, is_valid",
         [
@@ -74,6 +98,7 @@ class TestStreetBet:
         ],
     )
     def test_street_bet_validation(self, street_number, is_valid):
+        """Tests street number validation"""
         bet = StreetBet(100, street_number)
         assert bet.validate() == is_valid
 
@@ -86,6 +111,7 @@ class TestStreetBet:
         ],
     )
     def test_street_bet_winning_conditions(self, street_number, winning_numbers):
+        """Tests winning conditions for street bets"""
         bet = StreetBet(100, street_number)
 
         for number in winning_numbers:
@@ -97,6 +123,13 @@ class TestStreetBet:
 
 
 class TestCornerBet:
+    """
+    Tests for Corner Bet (four adjacent numbers)
+
+    Bet on four numbers that form a square. Payout 8:1.
+    Example: [1, 2, 4, 5] forms a valid corner bet.
+    """
+
     @pytest.mark.parametrize(
         "numbers, is_valid",
         [
@@ -109,6 +142,7 @@ class TestCornerBet:
         ],
     )
     def test_corner_bet_validation(self, numbers, is_valid):
+        """Tests corner number validation"""
         bet = CornerBet(100, numbers)
         assert bet.validate() == is_valid
 
@@ -140,11 +174,19 @@ class TestCornerBet:
         ],
     )
     def test_corner_bet_winning_conditions(self, numbers, winning_number, should_win):
+        """Tests winning conditions for corner bets"""
         bet = CornerBet(100, numbers)
         assert bet.is_winning(winning_number) == should_win
 
 
 class TestColorBet:
+    """
+    Tests for Color Bet (red or black)
+
+    Bet on all red or all black numbers. Payout 1:1.
+    Zero (0) is not included in either color (is green).
+    """
+
     @pytest.mark.parametrize(
         "color, is_valid",
         [
@@ -156,6 +198,7 @@ class TestColorBet:
         ],
     )
     def test_color_bet_validation(self, color, is_valid):
+        """Tests color validation"""
         bet = ColorBet(100, color)
         assert bet.validate() == is_valid
 
@@ -173,16 +216,25 @@ class TestColorBet:
         ],
     )
     def test_color_bet_winning_conditions(self, color, winning_number, should_win):
+        """Tests winning conditions for color bets"""
         bet = ColorBet(100, color)
         assert bet.is_winning(winning_number) == should_win
 
 
 class TestEvenOddBet:
+    """
+    Tests for Even/Odd Bet
+
+    Bet on all even or all odd numbers. Payout 1:1.
+    Zero (0) is not included in either category.
+    """
+
     @pytest.mark.parametrize(
         "choice, is_valid",
         [("even", True), ("odd", True), ("both", False), ("", False)],
     )
     def test_even_odd_bet_validation(self, choice, is_valid):
+        """Tests even/odd choice validation"""
         bet = EvenOddBet(100, choice)
         assert bet.validate() == is_valid
 
@@ -200,11 +252,19 @@ class TestEvenOddBet:
         ],
     )
     def test_even_odd_bet_winning_conditions(self, choice, winning_number, should_win):
+        """Tests winning conditions for even/odd bets"""
         bet = EvenOddBet(100, choice)
         assert bet.is_winning(winning_number) == should_win
 
 
 class TestHighLowBet:
+    """
+    Tests for High/Low Bet
+
+    Bet on high (19-36) or low (1-18) numbers. Payout 1:1.
+    Zero (0) is not included in either category.
+    """
+
     @pytest.mark.parametrize(
         "choice, is_valid",
         [
@@ -215,6 +275,7 @@ class TestHighLowBet:
         ],
     )
     def test_high_low_bet_validation(self, choice, is_valid):
+        """Tests high/low choice validation"""
         bet = HighLowBet(100, choice)
         assert bet.validate() == is_valid
 
@@ -232,11 +293,18 @@ class TestHighLowBet:
         ],
     )
     def test_high_low_bet_winning_conditions(self, choice, winning_number, should_win):
+        """Tests winning conditions for high/low bets"""
         bet = HighLowBet(100, choice)
         assert bet.is_winning(winning_number) == should_win
 
 
 class TestBasicValues:
+    """
+    Tests for basic bet properties across all bet types
+
+    Verifies payout ratios and type strings are consistent.
+    """
+
     @pytest.mark.parametrize(
         "bet_class, bet_args, expected_payout",
         [
@@ -254,6 +322,7 @@ class TestBasicValues:
     def test_all_bet_types_have_correct_payouts(
         self, bet_class, bet_args, expected_payout
     ):
+        """Tests that all bet types have correct payout ratios"""
         bet = bet_class(*bet_args)
         assert bet.get_payout() == expected_payout
 
@@ -274,11 +343,18 @@ class TestBasicValues:
     def test_all_bet_types_have_correct_type_strings(
         self, bet_class, bet_args, expected_type
     ):
+        """Tests that all bet types have correct type string representations"""
         bet = bet_class(*bet_args)
         assert bet.get_type() == expected_type
 
 
 class TestFactory:
+    """
+    Tests for BetFactory class
+
+    Verifies that factory correctly creates all bet types and handles errors.
+    """
+
     @pytest.mark.parametrize(
         "bet_type, kwargs, expected_class",
         [
@@ -294,6 +370,7 @@ class TestFactory:
         ],
     )
     def test_bet_factory_creates_all_types(self, bet_type, kwargs, expected_class):
+        """Tests that factory creates correct bet types"""
         factory = BetFactory()
         bet = factory.create_bet(bet_type, 100, **kwargs)
         assert isinstance(bet, expected_class)
@@ -302,6 +379,7 @@ class TestFactory:
         "invalid_bet_type", ["unknown_type", "invalid", "random", "test"]
     )
     def test_bet_factory_invalid_types(self, invalid_bet_type):
+        """Tests that factory raises errors for invalid bet types"""
         factory = BetFactory()
         with pytest.raises(ValueError, match="Unknown bet type"):
             factory.create_bet(invalid_bet_type, 100, choice=1)

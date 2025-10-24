@@ -5,17 +5,26 @@ from project.ha_4.bets import StraightBet
 
 
 class TestBettingInterface:
+    """
+    Unit tests for BettingInterface class
+
+    Tests bet type selection, amount validation, choice input, and complete betting flows.
+    """
+
     @pytest.fixture
     def betting_interface(self):
+        """Fixture providing a BettingInterface instance"""
         return BettingInterface()
 
     def test_initialization(self, betting_interface):
+        """Tests that BettingInterface initializes with required components"""
         assert betting_interface.bet_factory is not None
         assert hasattr(betting_interface, "BET_CONFIG")
         assert "straight" in betting_interface.BET_CONFIG
         assert "color" in betting_interface.BET_CONFIG
 
     def test_show_betting_options_displays_all_types(self, betting_interface, capsys):
+        """Tests that all bet types are displayed in the betting options"""
         betting_interface._show_betting_options()
         captured = capsys.readouterr()
         output = captured.out
@@ -36,6 +45,7 @@ class TestBettingInterface:
     def test_receive_bet_type_valid_input(
         self, betting_interface, user_input, expected_result
     ):
+        """Tests valid bet type input scenarios"""
         with patch("builtins.input", return_value=user_input):
             result = betting_interface._receive_bet_type()
             assert result == expected_result
@@ -51,6 +61,7 @@ class TestBettingInterface:
     def test_receive_bet_type_with_retry(
         self, betting_interface, user_inputs, expected_result
     ):
+        """Tests bet type selection with retry logic for invalid inputs"""
         with patch("builtins.input", side_effect=user_inputs):
             result = betting_interface._receive_bet_type()
             assert result == expected_result
@@ -68,11 +79,13 @@ class TestBettingInterface:
     def test_receive_bet_choice_valid_input(
         self, betting_interface, bet_type, user_input, expected_result
     ):
+        """Tests valid bet choice input for different bet types"""
         with patch("builtins.input", return_value=user_input):
             result = betting_interface._receive_bet_choice(bet_type)
             assert result == expected_result
 
     def test_receive_bet_choice_back_command(self, betting_interface):
+        """Tests that 'back' command returns None to navigate back"""
         with patch("builtins.input", return_value="back"):
             result = betting_interface._receive_bet_choice("straight")
             assert result is None
@@ -88,6 +101,7 @@ class TestBettingInterface:
     def test_receive_bet_amount_valid_input(
         self, betting_interface, user_input, expected_result
     ):
+        """Tests valid bet amount input scenarios"""
         with patch("builtins.input", return_value=user_input):
             result = betting_interface._receive_bet_amount(1000)
             assert result == expected_result
@@ -103,11 +117,13 @@ class TestBettingInterface:
     def test_receive_bet_amount_with_retry(
         self, betting_interface, user_inputs, max_bet, expected_result
     ):
+        """Tests bet amount validation with retry logic"""
         with patch("builtins.input", side_effect=user_inputs):
             result = betting_interface._receive_bet_amount(max_bet)
             assert result == expected_result
 
     def test_get_validated_bet_successful_flow(self, betting_interface):
+        """Tests complete successful betting flow from type to bet creation"""
         with patch.object(betting_interface, "_show_betting_options"), patch.object(
             betting_interface, "_receive_bet_type", return_value="straight"
         ), patch.object(
@@ -115,7 +131,6 @@ class TestBettingInterface:
         ), patch.object(
             betting_interface, "_receive_bet_choice", return_value=17
         ):
-
             bet = betting_interface.get_validated_bet(1000)
 
             assert bet is not None
@@ -125,6 +140,7 @@ class TestBettingInterface:
             assert bet.validate() == True
 
     def test_get_validated_bet_cancel_at_type_selection(self, betting_interface):
+        """Tests betting flow cancellation at type selection stage"""
         with patch.object(betting_interface, "_show_betting_options"), patch.object(
             betting_interface, "_receive_bet_type", return_value=None
         ):
@@ -133,6 +149,7 @@ class TestBettingInterface:
             assert bet is None
 
     def test_get_validated_bet_cancel_at_amount_selection(self, betting_interface):
+        """Tests betting flow cancellation at amount selection stage"""
         with patch.object(betting_interface, "_show_betting_options"), patch.object(
             betting_interface, "_receive_bet_type", return_value="straight"
         ), patch.object(betting_interface, "_receive_bet_amount", return_value=None):
@@ -141,6 +158,7 @@ class TestBettingInterface:
             assert bet is None
 
     def test_get_validated_bet_cancel_at_choice_selection(self, betting_interface):
+        """Tests betting flow cancellation at choice selection stage"""
         with patch.object(betting_interface, "_show_betting_options"), patch.object(
             betting_interface, "_receive_bet_type", return_value="straight"
         ), patch.object(
@@ -153,6 +171,7 @@ class TestBettingInterface:
             assert bet is None
 
     def test_get_validated_bet_validation_failure(self, betting_interface):
+        """Tests betting flow with initial validation failure and retry"""
         with patch.object(betting_interface, "_show_betting_options"), patch.object(
             betting_interface, "_receive_bet_type", return_value="straight"
         ), patch.object(
@@ -168,6 +187,7 @@ class TestBettingInterface:
             assert bet.validate() == True
 
     def test_get_validated_bet_too_many_validation_attempts(self, betting_interface):
+        """Tests betting flow termination after too many validation failures"""
         with patch.object(betting_interface, "_show_betting_options"), patch.object(
             betting_interface, "_receive_bet_type", return_value="straight"
         ), patch.object(
@@ -189,11 +209,13 @@ class TestBettingInterface:
     def test_bet_amount_validation_scenarios(
         self, betting_interface, max_bet, user_inputs, expected_results
     ):
+        """Tests various bet amount validation edge cases"""
         with patch("builtins.input", side_effect=user_inputs):
             result = betting_interface._receive_bet_amount(max_bet)
             assert result == expected_results
 
     def test_bet_config_completeness(self, betting_interface):
+        """Tests that all bet type configurations have required keys and valid converters"""
         required_keys = ["description", "message", "converter"]
 
         for bet_type, config in betting_interface.BET_CONFIG.items():
@@ -204,6 +226,7 @@ class TestBettingInterface:
             ), f"Converter for {bet_type} should be callable"
 
     def test_converter_functions_handle_errors(self, betting_interface):
+        """Tests that converter functions properly handle invalid inputs"""
         straight_converter = betting_interface.BET_CONFIG["straight"]["converter"]
         with pytest.raises(ValueError):
             straight_converter("not_a_number")
@@ -214,7 +237,14 @@ class TestBettingInterface:
 
 
 class TestBettingInterfaceIntegration:
+    """
+    Integration tests for complete betting interface flows
+
+    Tests multi-step interactions and state consistency.
+    """
+
     def test_complete_happy_path_flow(self):
+        """Tests complete successful betting flow with realistic user inputs"""
         betting_interface = BettingInterface()
 
         user_inputs = [
@@ -233,6 +263,7 @@ class TestBettingInterfaceIntegration:
         assert bet.validate() == True
 
     def test_interface_maintains_state_consistency(self):
+        """Tests that betting interface maintains consistent state across multiple bets"""
         betting_interface = BettingInterface()
 
         for i in range(3):

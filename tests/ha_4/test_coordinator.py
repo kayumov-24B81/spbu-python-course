@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch
 from project.ha_4.game_coordinator import GameCoordinator
 from project.ha_4.player import Player
 from project.ha_4.controllers import (
@@ -12,15 +12,24 @@ from project.ha_4.bets import StraightBet, ColorBet
 
 
 class TestGameCoordinator:
+    """
+    Unit tests for GameCoordinator class
+
+    Tests initialization, player management, and win condition checking.
+    """
+
     @pytest.fixture
     def game_coordinator(self):
+        """Fixture providing a GameCoordinator instance with max_rounds=5, winning_balance=2000"""
         return GameCoordinator(max_rounds=5, winning_balance=2000)
 
     @pytest.fixture
     def sample_player(self):
+        """Fixture providing a sample Player instance with 1000 balance"""
         return Player("TestPlayer", 1000)
 
     def test_initialization(self, game_coordinator):
+        """Tests that GameCoordinator initializes with correct default values"""
         assert game_coordinator.current_round == 0
         assert game_coordinator.max_rounds == 5
         assert game_coordinator.winning_balance == 2000
@@ -31,6 +40,7 @@ class TestGameCoordinator:
         assert game_coordinator.roulette is not None
 
     def test_add_player(self, game_coordinator, sample_player):
+        """Tests adding a player with controller to the game"""
         controller = ConservativeBotController(sample_player)
 
         game_coordinator._add_player(sample_player, controller)
@@ -50,6 +60,7 @@ class TestGameCoordinator:
     def test_check_win_condition(
         self, game_coordinator, balances, expected_winner_index
     ):
+        """Tests win condition checking with various player balances"""
         players = []
         for i, balance in enumerate(balances):
             player = Player(f"Player{i}", balance)
@@ -66,6 +77,7 @@ class TestGameCoordinator:
             assert winner is None
 
     def test_get_human_player(self, game_coordinator):
+        """Tests finding human player among mixed player types"""
         bot1 = Player("Bot1", 1000)
         game_coordinator._add_player(bot1, ConservativeBotController(bot1))
 
@@ -82,6 +94,7 @@ class TestGameCoordinator:
         assert found_human == human_player
 
     def test_get_human_player_no_human(self, game_coordinator):
+        """Tests human player search when no human players exist"""
         bot1 = Player("Bot1", 1000)
         game_coordinator._add_player(bot1, ConservativeBotController(bot1))
 
@@ -103,7 +116,7 @@ class TestGameCoordinator:
     def test_check_game_over(
         self, current_round, max_rounds, player_balances, expected_result
     ):
-
+        """Tests game over conditions including round limit and bankrupt players"""
         game = GameCoordinator(max_rounds=max_rounds, winning_balance=2000)
         game.current_round = current_round
 
@@ -116,6 +129,7 @@ class TestGameCoordinator:
             assert result == expected_result
 
     def test_setup_game_creates_players(self, game_coordinator):
+        """Tests game setup creates correct number of players with proper controllers"""
         with patch("builtins.input", return_value="TestHuman"), patch("builtins.print"):
             game_coordinator._setup_game()
 
@@ -137,8 +151,15 @@ class TestGameCoordinator:
 
 
 class TestGameCoordinatorRoundFlow:
+    """
+    Integration tests for game round flow and betting mechanics
+
+    Tests complete turn execution with various betting scenarios.
+    """
+
     @pytest.fixture
     def game_with_players(self):
+        """Fixture providing game with mixed player types (human, conservative, aggressive)"""
         game = GameCoordinator(max_rounds=10, winning_balance=3000)
 
         human_player = Player("Human", 1000)
@@ -156,6 +177,7 @@ class TestGameCoordinatorRoundFlow:
         return game, human_player, bot1, bot2
 
     def test_play_turn_increments_round(self, game_with_players):
+        """Tests that playing a turn increments the round counter"""
         game, _, _, _ = game_with_players
         initial_round = game.current_round
 
@@ -181,6 +203,7 @@ class TestGameCoordinatorRoundFlow:
             assert result == True
 
     def test_play_turn_with_bets_and_winners(self, game_with_players):
+        """Tests complete betting round with win/loss calculations"""
         game, human_player, bot1, bot2 = game_with_players
 
         human_bet = StraightBet(100, 16)  # Payout 35:1
@@ -220,6 +243,7 @@ class TestGameCoordinatorRoundFlow:
             assert result == True
 
     def test_play_turn_game_over_condition(self, game_with_players):
+        """Tests early termination when game over condition is met"""
         game, _, _, _ = game_with_players
 
         with patch.object(game, "_check_game_over", return_value=True):
@@ -227,6 +251,7 @@ class TestGameCoordinatorRoundFlow:
             assert result == False
 
     def test_play_turn_win_condition_met(self, game_with_players):
+        """Tests game termination when a player reaches winning balance"""
         game, human_player, bot1, bot2 = game_with_players
 
         human_bet = StraightBet(100, 17)
@@ -254,6 +279,7 @@ class TestGameCoordinatorRoundFlow:
             assert result == False
 
     def test_play_turn_no_bets_placed(self, game_with_players):
+        """Tests turn execution when no players place bets"""
         game, _, _, _ = game_with_players
 
         with patch.object(game, "_check_game_over", return_value=False), patch.object(
@@ -277,7 +303,14 @@ class TestGameCoordinatorRoundFlow:
 
 
 class TestGameCoordinatorIntegration:
+    """
+    Integration tests for complete game flow and state management
+
+    Tests multi-round gameplay and winner declaration.
+    """
+
     def test_complete_game_flow_with_mocks(self):
+        """Tests complete game loop with mocked dependencies"""
         game = GameCoordinator(max_rounds=3, winning_balance=1500)
 
         with patch.object(game, "_setup_game") as mock_setup, patch.object(
@@ -290,6 +323,7 @@ class TestGameCoordinatorIntegration:
             assert mock_play_turn.call_count == 3
 
     def test_game_state_changes_over_rounds(self):
+        """Tests that game state updates correctly across multiple rounds"""
         game = GameCoordinator(max_rounds=3, winning_balance=2000)
 
         player1 = Player("Player1", 1000)
@@ -328,6 +362,7 @@ class TestGameCoordinatorIntegration:
             assert game.round_history[-1] == 5
 
     def test_winner_declaration(self, capsys):
+        """Tests that winner declaration displays correct information"""
         game = GameCoordinator(max_rounds=5, winning_balance=2000)
 
         players = [
@@ -348,6 +383,7 @@ class TestGameCoordinatorIntegration:
         assert "FINAL RESULTS" in output
 
     def test_pattern_bot_history_update(self):
+        """Tests that PatternBotController correctly updates its number history"""
         game = GameCoordinator(max_rounds=5, winning_balance=2000)
 
         pattern_player = Player("PatternBot", 1000)
@@ -379,7 +415,14 @@ class TestGameCoordinatorIntegration:
 
 
 class TestFullGameSimulation:
+    """
+    End-to-end tests for complete game simulations
+
+    Tests game invariants and complete gameplay scenarios.
+    """
+
     def test_minimal_game_simulation(self):
+        """Tests minimal game simulation with limited rounds"""
         game = GameCoordinator(max_rounds=2, winning_balance=1000)
 
         player = Player("TestPlayer", 800)
@@ -394,6 +437,7 @@ class TestFullGameSimulation:
             assert game.current_round <= 2
 
     def test_game_coordinator_maintains_invariants(self):
+        """Tests that game invariants are maintained throughout gameplay"""
         game = GameCoordinator(max_rounds=10, winning_balance=1500)
 
         players = [

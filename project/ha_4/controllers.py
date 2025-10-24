@@ -1,7 +1,7 @@
 from project.ha_4.player import Player
 from project.ha_4.betting_interface import BettingInterface, BetFactory
 import random
-from typing import Optional, Dict, List, Tuple, Any
+from typing import Optional, List, Any
 
 
 class HumanPlayerController:

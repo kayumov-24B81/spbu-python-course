@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, Literal
+from typing import List
 
 
 class Bet(ABC):
