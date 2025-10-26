@@ -47,6 +47,33 @@ class HashTable(MutableMapping):
         """
         return abs(hash(key)) % self._table_size
 
+    def _resize_needed(self) -> bool:
+        """
+        Check if table needs to be resized.
+
+        Returns:
+            True if current load factor exceeds threshold, False otherwise
+        """
+        current_load: float = self._size / self._table_size
+        return current_load > self._load_factor
+
+    def _resize(self, new_size: int) -> None:
+        """
+        Resize the table and rehash all elements.
+
+        Args:
+            new_size: new size for the table
+        """
+        old_buckets: List[Tuple[int, Any]] = self._buckets
+
+        self._table_size = new_size
+        self._buckets = [[] for _ in range(self._table_size)]
+        self._size = 0
+
+        for bucket in old_buckets:
+            for key, value in bucket:
+                self[key] = value
+
     def __setitem__(self, key: Any, value: Any) -> None:
         """
         Set value for key. If key exists, update its value.
@@ -55,6 +82,9 @@ class HashTable(MutableMapping):
             key: key to set
             value: value to associate with key
         """
+        if self._resize_needed():
+            self._resize(self._table_size * 2)
+
         index: int = self._hash(key)
         bucket: List[Tuple[int, Any]] = self._buckets[index]
 
@@ -144,3 +174,16 @@ class HashTable(MutableMapping):
             number of key-value pairs
         """
         return self._size
+
+    def __repr__(self) -> str:
+        """
+        Return string representation of table.
+
+        Returns:
+            string representation in dictionary format
+        """
+        items: List[str] = []
+        for bucket in self._buckets:
+            for key, value in bucket:
+                items.append(f"{key}: {value}")
+        return "{" + ", ".join(items) + "}"
