@@ -33,7 +33,9 @@ class HashTable(MutableMapping):
         self._size = 0
         self._table_size = initial_size
         self._load_factor = load_factor
-        self._buckets = [[] for _ in range(self._table_size)]
+        self._buckets: List[List[Tuple[int, Any]]] = [
+            [] for _ in range(self._table_size)
+        ]
 
     def _hash(self, key: Any) -> int:
         """
@@ -64,7 +66,7 @@ class HashTable(MutableMapping):
         Args:
             new_size: new size for the table
         """
-        old_buckets: List[Tuple[int, Any]] = self._buckets
+        old_buckets: List[List[Tuple[int, Any]]] = self._buckets
 
         self._table_size = new_size
         self._buckets = [[] for _ in range(self._table_size)]
