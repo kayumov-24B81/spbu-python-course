@@ -51,7 +51,7 @@ class MultiThreadingHashTable(MutableMapping):
         if not 0 < load_factor < 1:
             raise ValueError("Load factor should be between 0 and 1")
 
-        self._size = cast(Any, manager).Value("i", 0)
+        self._size: ValueProxy[int] = cast(Any, manager).Value("i", 0)
         self._table_size: ValueProxy[int] = cast(Any, manager).Value("i", initial_size)
         self._load_factor: float = load_factor
 
@@ -97,7 +97,7 @@ class MultiThreadingHashTable(MutableMapping):
         Note:
             This is a costly operation that blocks all other operations temporarily.
         """
-        self._resize_lock.aquire()
+        self._resize_lock.acquire()
         try:
             for lock in self._bucket_locks:
                 lock.acquire()
