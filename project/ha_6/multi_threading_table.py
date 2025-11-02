@@ -1,7 +1,7 @@
 from collections.abc import MutableMapping
-from typing import Any, List, Tuple, Iterator, Union, cast
+from typing import Any, List, Tuple, Iterator, cast
 from multiprocessing import Manager
-from multiprocessing.managers import ListProxy, ValueProxy
+from multiprocessing.managers import ValueProxy
 import threading
 
 
