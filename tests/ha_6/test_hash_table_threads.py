@@ -158,11 +158,10 @@ class TestMultiThreadingHashTable:
         increments_per_thread = 100
 
         table["counter"] = 0
-        external_lock = threading.Lock()
 
         def increment_worker():
-            with external_lock:
-                for _ in range(increments_per_thread):
+            for _ in range(increments_per_thread):
+                with table._resize_lock:
                     current = table["counter"]
                     table["counter"] = current + 1
 
@@ -375,6 +374,70 @@ class TestMultiThreadingHashTable:
 
         assert not deadlock_detected[0]
         assert completed_operations[0] >= expected_min_operations
+
+
+@pytest.fixture
+def manager():
+    """Return multiprocessing Manager instance."""
+    with Manager() as manager:
+        yield manager
+
+
+@pytest.fixture
+def table(manager):
+    """Return empty MultiThreadingHashTable instance."""
+    return MultiThreadingHashTable(manager)
+
+
+def test_all_operations_concurrently(table):
+    """Test to demonstrate that hash table can be operated on in parallel"""
+    num_threads = 8
+    num_threads = 6
+    operations_per_thread = 50
+    errors = []
+
+    def worker(thread_id):
+        for i in range(operations_per_thread):
+            key = f"key_{thread_id}_{i}"
+
+            try:
+                table[key] = f"value_{thread_id}_{i}"
+
+                value = table[key]
+                assert value == f"value_{thread_id}_{i}"
+
+                table[key] = f"updated_{thread_id}_{i}"
+                assert table[key] == f"updated_{thread_id}_{i}"
+
+                assert key in table
+
+                if i % 10 == 0:
+                    del table[key]
+                    assert key not in table
+                    table[key] = f"reinserted_{thread_id}_{i}"
+
+            except Exception as e:
+                errors.append(f"Thread {thread_id}, op {i}: {e}")
+
+    threads = []
+    for i in range(num_threads):
+        thread = threading.Thread(target=worker, args=(i,))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    assert len(errors) == 0
+
+    for thread_id in range(num_threads):
+        for i in range(operations_per_thread):
+            key = f"key_{thread_id}_{i}"
+            if i % 10 == 0:
+                assert table[key] == f"reinserted_{thread_id}_{i}"
+            else:
+                # Was updated
+                assert table[key] == f"updated_{thread_id}_{i}"
 
 
 def test_sneaky_pie_recipe():
