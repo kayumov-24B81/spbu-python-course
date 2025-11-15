@@ -1,7 +1,7 @@
 from collections.abc import MutableMapping
 from typing import Any, List, Tuple, Iterator
 from multiprocessing import Manager
-from multiprocessing.managers import ValueProxy
+from multiprocessing.managers import ValueProxy, SyncManager, ListProxy
 import threading
 
 
@@ -30,7 +30,9 @@ class MultiThreadingHashTable(MutableMapping):
             print(len(ht))     # 1
     """
 
-    def __init__(self, manager: Any, initial_size: int = 8, load_factor: float = 0.75):
+    def __init__(
+        self, manager: SyncManager, initial_size: int = 8, load_factor: float = 0.75
+    ):
         """
         Initialize the multi-threading hash table with shared state.
 
@@ -57,9 +59,11 @@ class MultiThreadingHashTable(MutableMapping):
         self._table_size: ValueProxy[int] = manager.Value("i", initial_size)
         self._load_factor: float = load_factor
 
-        self._buckets = manager.list([manager.list() for _ in range(initial_size)])
+        self._buckets: ListProxy = manager.list(
+            [manager.list() for _ in range(initial_size)]
+        )
 
-        self._bucket_locks = manager.list(
+        self._bucket_locks: ListProxy = manager.list(
             [manager.RLock() for _ in range(initial_size)]
         )
         self._resize_lock = manager.RLock()
@@ -109,7 +113,9 @@ class MultiThreadingHashTable(MutableMapping):
                 lock.acquire()
 
             try:
-                old_buckets: List[List[Tuple[int, Any]]] = list(self._buckets)
+                old_buckets: List[List[Tuple[int, Any]]] = [
+                    list(bucket) for bucket in self._buckets
+                ]
                 old_locks: List[threading.RLock] = list(self._bucket_locks)
 
                 self._table_size.value = new_size
@@ -184,19 +190,13 @@ class MultiThreadingHashTable(MutableMapping):
         """
         index: int = self._hash(key)
 
-        lock = self._bucket_locks[index]
-        lock.acquire()
+        bucket: List[Tuple[int, Any]] = self._buckets[index]
 
-        try:
-            bucket: List[Tuple[int, Any]] = self._buckets[index]
+        for (existing_key, value) in bucket:
+            if existing_key == key:
+                return value
 
-            for (existing_key, value) in bucket:
-                if existing_key == key:
-                    return value
-
-            raise KeyError(f"Key {key} was not found in hash table!")
-        finally:
-            lock.release()
+        raise KeyError(f"Key {key} was not found in hash table!")
 
     def __delitem__(self, key: Any) -> None:
         """
@@ -267,7 +267,7 @@ class MultiThreadingHashTable(MutableMapping):
             try:
                 keys = []
                 for bucket in self._buckets:
-                    for (key, value) in bucket:
+                    for (key, value) in list(bucket):
                         keys.append(key)
                 return iter(keys)
             finally:
