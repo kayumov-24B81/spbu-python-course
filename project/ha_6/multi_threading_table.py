@@ -102,41 +102,35 @@ class MultiThreadingHashTable(MutableMapping):
         Note:
             This is a costly operation that blocks all other operations temporarily.
         """
-        if not self._resize_lock.acquire(blocking=False):
+        if not self._resize_needed():
             return
 
+        for lock in self._bucket_locks:
+            lock.acquire()
+
         try:
-            if not self._resize_needed():
-                return
+            old_buckets: List[List[Tuple[int, Any]]] = [
+                list(bucket) for bucket in self._buckets
+            ]
+            old_locks: List[threading.RLock] = list(self._bucket_locks)
 
-            for lock in self._bucket_locks:
-                lock.acquire()
+            self._table_size.value = new_size
+            self._buckets[:] = [self._manager.list() for _ in range(new_size)]
+            self._bucket_locks[:] = [self._manager.RLock() for _ in range(new_size)]
+            self._size.value = 0
+            total_elements = 0
 
-            try:
-                old_buckets: List[List[Tuple[int, Any]]] = [
-                    list(bucket) for bucket in self._buckets
-                ]
-                old_locks: List[threading.RLock] = list(self._bucket_locks)
+            for bucket in old_buckets:
+                for key, value in bucket:
+                    new_index = self._hash(key)
+                    self._buckets[new_index].append((key, value))
+                    total_elements += 1
 
-                self._table_size.value = new_size
-                self._buckets[:] = [self._manager.list() for _ in range(new_size)]
-                self._bucket_locks[:] = [self._manager.RLock() for _ in range(new_size)]
-                self._size.value = 0
-                total_elements = 0
+            self._size.value = total_elements
 
-                for bucket in old_buckets:
-                    for key, value in bucket:
-                        new_index = self._hash(key)
-                        self._buckets[new_index].append((key, value))
-                        total_elements += 1
-
-                self._size.value = total_elements
-
-            finally:
-                for lock in old_locks:
-                    lock.release()
         finally:
-            self._resize_lock.release()
+            for lock in old_locks:
+                lock.release()
 
     def __setitem__(self, key: Any, value: Any) -> None:
         """
@@ -146,8 +140,7 @@ class MultiThreadingHashTable(MutableMapping):
             key: Key to set or update. Must be hashable.
             value: Value to associate with the key.
         """
-        self._resize_lock.acquire()
-        try:
+        with self._resize_lock:
             if self._resize_needed():
                 self._resize(self._table_size.value * 2)
 
@@ -168,8 +161,6 @@ class MultiThreadingHashTable(MutableMapping):
                 self._size.value += 1
             finally:
                 lock.release()
-        finally:
-            self._resize_lock.release()
 
     def __getitem__(self, key: Any) -> Any:
         """
@@ -297,5 +288,8 @@ class MultiThreadingHashTable(MutableMapping):
         """
         items: List[str] = []
         for key in self:
-            items.append(f"{key}: {self[key]}")
+            try:
+                items.append(f"{key}: {self[key]}")
+            except KeyError:
+                continue
         return "{" + ", ".join(items) + "}"

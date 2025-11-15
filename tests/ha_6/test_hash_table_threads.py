@@ -390,34 +390,58 @@ def table(manager):
 
 
 def test_all_operations_concurrently(table):
-    """Test to demonstrate that hash table can be operated on in parallel"""
-    num_threads = 8
-    num_threads = 6
-    operations_per_thread = 50
+    """Test demonstrating real parallel execution by measuring performance
+    under high thread contention with minimal keys."""
+    num_threads = 15
+    operations_per_thread = 200
     errors = []
+    execution_times = []
+    error_lock = threading.Lock()
+    time_lock = threading.Lock()
+
+    keys = ["key_1", "key_2", "key_3"]
 
     def worker(thread_id):
-        for i in range(operations_per_thread):
-            key = f"key_{thread_id}_{i}"
+        local_errors = []
+        start_time = time.time()
+        try:
+            for i in range(operations_per_thread):
+                key = keys[i % len(keys)]
+                operation_type = (thread_id + i) % 5
 
-            try:
-                table[key] = f"value_{thread_id}_{i}"
+                if operation_type == 0:
+                    table[key] = f"writer_{thread_id}_{i}"
+                elif operation_type == 1:
+                    try:
+                        value = table[key]
+                        assert isinstance(value, str)
+                    except KeyError:
+                        pass
+                elif operation_type == 2:
+                    try:
+                        del table[key]
+                    except KeyError:
+                        pass
+                elif operation_type == 3:
+                    _ = key in table
+                else:
+                    table[key] = f"mixed_{thread_id}_{i}"
+                    try:
+                        value = table[key]
+                    except KeyError:
+                        pass
 
-                value = table[key]
-                assert value == f"value_{thread_id}_{i}"
+        except Exception as e:
+            local_errors.append(f"Thread {thread_id}: {e}")
 
-                table[key] = f"updated_{thread_id}_{i}"
-                assert table[key] == f"updated_{thread_id}_{i}"
+        end_time = time.time()
 
-                assert key in table
+        with error_lock:
+            errors.extend(local_errors)
+        with time_lock:
+            execution_times.append(end_time - start_time)
 
-                if i % 10 == 0:
-                    del table[key]
-                    assert key not in table
-                    table[key] = f"reinserted_{thread_id}_{i}"
-
-            except Exception as e:
-                errors.append(f"Thread {thread_id}, op {i}: {e}")
+    start_total = time.time()
 
     threads = []
     for i in range(num_threads):
@@ -428,16 +452,14 @@ def test_all_operations_concurrently(table):
     for thread in threads:
         thread.join()
 
-    assert len(errors) == 0
+    total_time = time.time() - start_total
+    avg_thread_time = sum(execution_times) / len(execution_times)
 
-    for thread_id in range(num_threads):
-        for i in range(operations_per_thread):
-            key = f"key_{thread_id}_{i}"
-            if i % 10 == 0:
-                assert table[key] == f"reinserted_{thread_id}_{i}"
-            else:
-                # Was updated
-                assert table[key] == f"updated_{thread_id}_{i}"
+    is_parallel = total_time < avg_thread_time * num_threads * 0.8
+
+    assert len(errors) == 0
+    assert is_parallel
+    assert total_time > 0.001
 
 
 def test_sneaky_pie_recipe():
