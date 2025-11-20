@@ -2,7 +2,6 @@ from collections.abc import MutableMapping
 from typing import Any, List, Tuple, Iterator
 from multiprocessing import Manager
 from multiprocessing.managers import ValueProxy, SyncManager, ListProxy
-import threading
 
 
 class MultiThreadingHashTable(MutableMapping):
@@ -15,12 +14,13 @@ class MultiThreadingHashTable(MutableMapping):
     Manager for inter-process communication.
 
     Attributes:
+        _manager(Manager): manager
         _size (ValueProxy[int]): Shared integer tracking number of key-value pairs
         _table_size (ValueProxy[int]): Shared integer for current internal array size
         _load_factor (float): Maximum load factor before resizing (0.0 to 1.0)
         _buckets (ListProxy[List[Tuple[Any, Any]]]): Shared list of buckets storing key-value pairs
-        _bucket_locks (ListProxy[threading.RLock]): Shared list of locks for each bucket
-        _resize_lock (threading.RLock): Lock for resize operations to prevent deadlocks
+        _bucket_locks (ListProxy[manager.Lock]): Shared list of locks for each bucket
+        _resize_lock (manager.Lock): Lock for resize operations to prevent deadlocks
 
     Example:
         with Manager() as manager:
@@ -30,14 +30,11 @@ class MultiThreadingHashTable(MutableMapping):
             print(len(ht))     # 1
     """
 
-    def __init__(
-        self, manager: SyncManager, initial_size: int = 8, load_factor: float = 0.75
-    ):
+    def __init__(self, initial_size: int = 8, load_factor: float = 0.75):
         """
         Initialize the multi-threading hash table with shared state.
 
         Args:
-            manager: multiprocessing Manager instance for creating shared objects
             initial_size: Initial size of the internal array. Must be positive.
             load_factor: Load factor threshold for triggering resizing (0.0 to 1.0).
 
@@ -45,7 +42,6 @@ class MultiThreadingHashTable(MutableMapping):
             ValueError: If initial_size is less than 1 or load_factor is not between 0 and 1.
 
         Note:
-            The manager parameter is required to enable inter-process communication.
             All internal state is created through the manager to ensure process safety.
         """
         if initial_size < 1:
@@ -53,20 +49,20 @@ class MultiThreadingHashTable(MutableMapping):
         if not 0 < load_factor < 1:
             raise ValueError("Load factor should be between 0 and 1")
 
-        self._manager = manager
+        self._manager = Manager()
 
-        self._size: ValueProxy[int] = manager.Value("i", 0)
-        self._table_size: ValueProxy[int] = manager.Value("i", initial_size)
+        self._size: ValueProxy[int] = self._manager.Value("i", 0)
+        self._table_size: ValueProxy[int] = self._manager.Value("i", initial_size)
         self._load_factor: float = load_factor
 
-        self._buckets: ListProxy = manager.list(
-            [manager.list() for _ in range(initial_size)]
+        self._buckets: ListProxy = self._manager.list(
+            [self._manager.list() for _ in range(initial_size)]
         )
 
-        self._bucket_locks: ListProxy = manager.list(
-            [manager.RLock() for _ in range(initial_size)]
+        self._bucket_locks: ListProxy = self._manager.list(
+            [self._manager.Lock() for _ in range(initial_size)]
         )
-        self._resize_lock = manager.RLock()
+        self._resize_lock = self._manager.Lock()
 
     def _hash(self, key: Any) -> int:
         """
@@ -112,11 +108,11 @@ class MultiThreadingHashTable(MutableMapping):
             old_buckets: List[List[Tuple[int, Any]]] = [
                 list(bucket) for bucket in self._buckets
             ]
-            old_locks: List[threading.RLock] = list(self._bucket_locks)
+            old_locks: List[SyncManager.Lock] = list(self._bucket_locks)
 
             self._table_size.value = new_size
             self._buckets[:] = [self._manager.list() for _ in range(new_size)]
-            self._bucket_locks[:] = [self._manager.RLock() for _ in range(new_size)]
+            self._bucket_locks[:] = [self._manager.Lock() for _ in range(new_size)]
             self._size.value = 0
             total_elements = 0
 
@@ -229,9 +225,13 @@ class MultiThreadingHashTable(MutableMapping):
         """
         try:
             index: int = self._hash(key)
-            with self._bucket_locks[index]:
+            lock = self._bucket_locks[index]
+            lock.acquire()
+            try:
                 bucket: List[Tuple[Any, Any]] = self._buckets[index]
                 return any(existing_key == key for (existing_key, value) in bucket)
+            finally:
+                lock.release()
 
         except IndexError:
             return False
@@ -293,3 +293,26 @@ class MultiThreadingHashTable(MutableMapping):
             except KeyError:
                 continue
         return "{" + ", ".join(items) + "}"
+
+
+class HashTableManager(SyncManager):
+    pass
+
+
+HashTableManager.register(
+    "MultiThreadingHashTable",
+    MultiThreadingHashTable,
+    exposed=[
+        "__getitem__",
+        "__setitem__",
+        "__delitem__",
+        "__contains__",
+        "__iter__",
+        "__len__",
+        "__repr__",
+        "keys",
+        "values",
+        "items",
+        "clear",
+    ],
+)
