@@ -108,7 +108,7 @@ class MultiThreadingHashTable(MutableMapping):
             old_buckets: List[List[Tuple[int, Any]]] = [
                 list(bucket) for bucket in self._buckets
             ]
-            old_locks: List[SyncManager.Lock] = list(self._bucket_locks)
+            old_locks = list(self._bucket_locks)
 
             self._table_size.value = new_size
             self._buckets[:] = [self._manager.list() for _ in range(new_size)]
@@ -195,23 +195,32 @@ class MultiThreadingHashTable(MutableMapping):
         Raises:
             KeyError: If the key is not found in the hash table.
         """
-        index: int = self._hash(key)
-
-        lock = self._bucket_locks[index]
-        lock.acquire()
+        resize_lock = self._resize_lock
+        resize_lock.acquire()
 
         try:
-            bucket: List[Tuple[int, Any]] = self._buckets[index]
+            index: int = self._hash(key)
 
-            for i, (existing_key, value) in enumerate(bucket):
-                if existing_key == key:
-                    del bucket[i]
-                    self._size.value -= 1
-                    return
+            if index >= len(self._bucket_locks):
+                raise KeyError(f"Key {key} was not found in hash table!")
 
-            raise KeyError(f"Key {key} was not found in hash table!")
+            lock = self._bucket_locks[index]
+            lock.acquire()
+
+            try:
+                bucket: List[Tuple[int, Any]] = self._buckets[index]
+
+                for i, (existing_key, value) in enumerate(bucket):
+                    if existing_key == key:
+                        del bucket[i]
+                        self._size.value -= 1
+                        return
+
+                raise KeyError(f"Key {key} was not found in hash table!")
+            finally:
+                lock.release()
         finally:
-            lock.release()
+            resize_lock.release()
 
     def __contains__(self, key: Any) -> bool:
         """
